@@ -2,13 +2,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "shared.h"
+#include "stack.h"
 
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
 #define MEMORY_SIZE 4096
 #define MAX_MESSAGE_SIZE 1024
-
-void terminate(bool condition, const char *message);
 
 int main(int argc, char *argv[])
 {
@@ -41,11 +41,3 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-void terminate(bool condition, const char *message)
-{
-    if (condition)
-    {
-        fprintf(stderr, "%s", message);
-        exit(EXIT_FAILURE);
-    }
-}
