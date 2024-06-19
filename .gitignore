@@ -53,3 +53,6 @@ dkms.conf
 
 # Chip-8 Roms
 *.ch8
+
+#VSCode
+.vscode/
