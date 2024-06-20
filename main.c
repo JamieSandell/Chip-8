@@ -30,7 +30,12 @@ int main(int argc, char *argv[])
     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error: failed to read the contents of %s\n", argv[1]);
     terminate(fread(memory, 1, (size_t)file_size, fpr) != (size_t)file_size, g_message);
 
-    char display[c_display_width * c_display_height];
+    for (size_t i = 0; i < C_FONT_SET_SIZE; ++i)
+    {
+        memory[c_font_offset + i] = c_font_set[i];
+    } 
+
+    char display[C_DISPLAY_WIDTH * C_DISPLAY_HEIGHT];
     int16_t pc;
     int16_t i;
     int8_t delay_timer;
@@ -57,4 +62,3 @@ int main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
-
