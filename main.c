@@ -26,17 +26,16 @@ int main(int argc, char *argv[])
     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error: failed to seek to the beginning of %s\n", argv[1]);
     terminate(fseek(fpr, 0L, SEEK_SET), g_message);
 
-    char memory[C_MEMORY_SIZE];
+    uint8_t memory[C_MEMORY_SIZE];
     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error: failed to read the contents of %s\n", argv[1]);
-    terminate(fread(memory, 1, (size_t)file_size, fpr) != (size_t)file_size, g_message);
+    terminate(fread(memory + c_ram_offset, 1, (size_t)file_size, fpr) != (size_t)file_size, g_message);
 
     for (size_t i = 0; i < C_FONT_SET_SIZE; ++i)
     {
         memory[c_font_offset + i] = c_font_set[i];
-    } 
+    }
 
     char display[C_DISPLAY_WIDTH * C_DISPLAY_HEIGHT];
-    int16_t pc;
     int16_t i;
     int8_t delay_timer;
     int8_t sound_timer;
@@ -59,6 +58,16 @@ int main(int argc, char *argv[])
         int8_t VE;
         int8_t VF;
     } general_purpose_registers;
+
+    uint16_t pc = c_ram_offset;
+    uint16_t instruction;
+
+    do
+    {
+        instruction = (memory[pc] << 8) | memory[pc + 1];
+        pc += 2;
+    } while (true);
+    
 
     return EXIT_SUCCESS;
 }
