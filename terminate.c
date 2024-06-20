@@ -1,5 +1,6 @@
+#include <stdio.h>
 #include <stdlib.h>
-#include "shared.h"
+#include "terminate.h"
 
 void terminate(bool condition, const char *message)
 {
