@@ -61,11 +61,29 @@ int main(int argc, char *argv[])
 
     uint16_t pc = c_ram_offset;
     uint16_t instruction;
+    uint8_t x;
+    uint8_t y;
+    uint8_t n;
+    uint8_t nn;
+    uint16_t nnn;
+    uint8_t first_byte;
+    uint8_t second_byte;
 
     do
     {
-        instruction = (memory[pc] << 8) | memory[pc + 1];
+        first_byte = memory[pc];
+        second_byte = memory[pc + 1];
+        instruction = (first_byte << 8) | second_byte;
+        x = first_byte << 4;
+        x = (x >> 4) & 0x0F;
+        y = (second_byte >> 4) & 0x0F;
+        n = second_byte << 4;
+        n = (n >> 4) & 0x0F;
+        nn = second_byte;
+        nnn = instruction << 4;
+        nnn = (nnn >> 4) & 0x0F;
         pc += 2;
+
     } while (true);
     
 
