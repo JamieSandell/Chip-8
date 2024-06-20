@@ -36,28 +36,10 @@ int main(int argc, char *argv[])
     }
 
     char display[C_DISPLAY_WIDTH * C_DISPLAY_HEIGHT];
-    int16_t i;
+    uint16_t i;
     int8_t delay_timer;
     int8_t sound_timer;
-    struct GeneralPurposeRegisters
-    {
-        int8_t V0;
-        int8_t V1;
-        int8_t V2;
-        int8_t V3;
-        int8_t V4;
-        int8_t V5;
-        int8_t V6;
-        int8_t V7;
-        int8_t V8;
-        int8_t V9;
-        int8_t VA;
-        int8_t VB;
-        int8_t VC;
-        int8_t VD;
-        int8_t VE;
-        int8_t VF;
-    } general_purpose_registers;
+    int8_t general_purpose_registers[C_GENERAL_REGISTERS_SIZE];
 
     uint16_t pc = c_ram_offset;
     uint16_t instruction;
@@ -68,21 +50,82 @@ int main(int argc, char *argv[])
     uint16_t nnn;
     uint8_t first_byte;
     uint8_t second_byte;
+    uint8_t opcode;
 
     do
     {
         first_byte = memory[pc];
         second_byte = memory[pc + 1];
         instruction = (first_byte << 8) | second_byte;
-        x = first_byte << 4;
-        x = (x >> 4) & 0x0F;
-        y = (second_byte >> 4) & 0x0F;
-        n = second_byte << 4;
-        n = (n >> 4) & 0x0F;
+        x = first_byte & 0x0F; // second nibble
+        y = (second_byte >> 4) & 0x0F; // 3rd nibble
+        n = second_byte & 0x0F; // 4th nibble
         nn = second_byte;
-        nnn = instruction << 4;
-        nnn = (nnn >> 4) & 0x0F;
+        nnn = (uint16_t)x << 8; // second nibble
+        nnn |= (uint16_t)y << 4; // third nibble
+        nnn |= (uint16_t)n; // 4th nibble
+        opcode = (first_byte >> 4) & 0x0F;
         pc += 2;
+
+        switch (opcode)
+        {
+            case 0:
+            {
+                switch (nnn)
+                {
+                    case 0x0E0:
+                    {
+                        printf("disp_clear()\n");
+                        break;
+                    }
+                    case 0x0EE:
+                    {
+                        printf("return\n");
+                        break;
+                    }
+                    default:
+                    {
+                        snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the 0 instruction.\n");
+                        terminate(true, g_message);
+                    }
+                }
+                break;
+            }
+            case 1:
+            {
+                printf("goto NNN\n");
+                pc = nnn;
+                break;
+            }
+            case 6:
+            {
+                printf("Vx = NN\n");
+                general_purpose_registers[n] = nn;
+                break;
+            }
+            case 7:
+            {
+                printf("Vx += NN\n");
+                general_purpose_registers[n] += nn;
+                break;
+            }
+            case 0xA:
+            {
+                printf("I = NNN\n");
+                i = nnn;
+                break;
+            }
+            case 0xD:
+            {
+                printf("draw(Vx, Vy, N)\n");
+                break;
+            }
+            default:
+            {
+                snprintf(g_message, C_MAX_MESSAGE_SIZE, "Opcode (first nibble) %1X at memory address %d not implemented.\n", pc, opcode);
+                terminate(true, g_message);
+            }
+        }
 
     } while (true);
     
