@@ -56,3 +56,11 @@ dkms.conf
 
 #VSCode
 .vscode/
+
+Archive/
+
+build/
+
+misc/
+
+data/
