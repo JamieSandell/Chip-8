@@ -53,7 +53,7 @@ WinMain (HINSTANCE instance,
         if (window)
         {
             running = true;
-            bool result;
+            int result;
             MSG message;
             
             while ((result = GetMessage(&message, 0, 0, 0)) != 0 && running)

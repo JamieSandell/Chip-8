@@ -64,3 +64,5 @@ build/
 misc/
 
 data/
+
+*.lnk
