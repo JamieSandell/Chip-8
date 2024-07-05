@@ -73,16 +73,11 @@ WinMain (HINSTANCE instance,
         if (window)
         {
             running = true;
-            int result;
-            MSG message;
             
-            while ((result = GetMessage(&message, 0, 0, 0)) != 0 && running)
+            while (running)
             {
-                if (result == -1)
-                {
-                    // TODO: Logging
-                }
-                else
+                MSG message;
+                while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
                 {
                     TranslateMessage(&message);
                     DispatchMessage(&message);
@@ -91,15 +86,13 @@ WinMain (HINSTANCE instance,
         }
         else
         {
-            // TODO: Logging
+            //TODO: Logging
         }
-    }
-    else
-    {
-        //TODO: Logging
+        
+        return 0;
     }
     
-    return (0);
+    return -1;
 }
 
 internal void
@@ -209,7 +202,7 @@ win32_resize_dib_section(int width, int height)
     bytes_per_pixel = 4;
     int bitmap_memory_size = bytes_per_pixel * (bitmap_width * bitmap_height);
     bitmap_memory = VirtualAlloc(0, bitmap_memory_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    render_weird_gradient(128, 0);
+    render_weird_gradient(0, 0);
     
 }
 
