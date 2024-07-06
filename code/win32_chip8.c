@@ -17,12 +17,21 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-global_variable int bitmap_height;
-global_variable BITMAPINFO bitmap_info;
-global_variable void *bitmap_memory;
-global_variable int bitmap_width;
-global_variable int bytes_per_pixel;
+struct win32_offscreen_buffer
+{
+    // NOTE: Pixels are always 32-bits wide.
+    // Memory order:  0x BB GG RR xx
+    // Little endian: 0x xx RR GG BB
+    int height;
+    BITMAPINFO info;
+    void *memory;
+    int width;
+    int bytes_per_pixel;
+};
+
+
 global_variable bool running;
+global_variable struct win32_offscreen_buffer global_back_buffer;
 global_variable int window_width;
 global_variable int window_height;
 
@@ -73,15 +82,25 @@ WinMain (HINSTANCE instance,
         if (window)
         {
             running = true;
+            int x_offset = 0;
+            int y_offset = 0;
             
             while (running)
             {
+                HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
                 MSG message;
                 while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
                 {
                     TranslateMessage(&message);
                     DispatchMessage(&message);
                 }
+                
+                render_weird_gradient(x_offset, y_offset);
+                ++x_offset;
+                
+                RECT client_rect;
+                GetClientRect(window, &client_rect);
+                win32_update_window(device_context, &client_rect);
             }
         }
         else
@@ -103,24 +122,15 @@ render_weird_gradient(int x_offset, int y_offset)
     
     for (int y = 0; y < bitmap_height; ++y)
     {
-        u8 *pixel = (u8 *)row;
+        u32 *pixel = (u32 *)row;
         
         for (int x = 0; x < bitmap_width; ++x)
         {
-            *pixel = (u8)(x + x_offset);
-            //*pixel = 0;
-            ++pixel;
+            u8 red = 0;
+            u8 green = (u8)(y + y_offset);
+            u8 blue = (u8)(x + x_offset);
             
-            *pixel = (u8)(y + y_offset);
-            //*pixel = 0;
-            ++pixel;
-            
-            *pixel = (u8)row;
-            //*pixel = 0;
-            ++pixel;
-            
-            *pixel = 0;
-            ++pixel;
+            *pixel++ = red << 16 | green << 8 | blue; // << 0
         }
         
         row += pitch;
@@ -202,8 +212,6 @@ win32_resize_dib_section(int width, int height)
     bytes_per_pixel = 4;
     int bitmap_memory_size = bytes_per_pixel * (bitmap_width * bitmap_height);
     bitmap_memory = VirtualAlloc(0, bitmap_memory_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    render_weird_gradient(0, 0);
-    
 }
 
 internal void
