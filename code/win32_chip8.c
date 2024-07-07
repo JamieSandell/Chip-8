@@ -6,16 +6,17 @@
 #define local_persist static
 #define global_variable static
 
-// unsigned integers
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
-// signed integers
+
 typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
+
+typedef s32 b32;
 
 struct win32_offscreen_buffer
 {
@@ -37,10 +38,8 @@ struct win32_window_dimension
 };
 
 
-global_variable bool running;
+global_variable bool global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
-global_variable int window_width;
-global_variable int window_height;
 
 internal void
 render_weird_gradient(struct win32_offscreen_buffer *buffer, int x_offset, int y_offset);
@@ -93,11 +92,11 @@ WinMain (HINSTANCE instance,
         if (window)
         {
             win32_resize_dib_section(&global_back_buffer, 1280, 720);
-            running = true;
+            global_running = true;
             int x_offset = 0;
             int y_offset = 0;
             
-            while (running)
+            while (global_running)
             {
                 HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
                 MSG message;
@@ -187,39 +186,59 @@ win32_main_window_callback(HWND window,
     
     switch (message)
     {
-        case WM_PAINT:
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN:
+        case WM_KEYUP:
         {
-            PAINTSTRUCT paint;
-            HDC device_context = BeginPaint(window, &paint);
-            struct win32_window_dimension dimension = win32_get_window_dimension(window);
-            win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
-            EndPaint(window, &paint);
-        } break;
-        
-        case WM_SIZE:
-        {
-        } break;
-        
-        case WM_DESTROY:
-        {
-            running = false;
-        } break;
-        
-        case WM_CLOSE:
-        {
-            running = false;
-        } break;
-        
-        case WM_ACTIVATEAPP:
-        {
-            OutputDebugString("WM_ACTIVATEAPP");
-        } break;
-        
-        default:
-        {
-            result = DefWindowProc(window, message, w_param, l_param);
+            bool is_down = ((l_param & (1 << 31)) == 0);
+            bool was_down = ((l_param & (1 << 30)) != 0);
+            u32 vk_code = w_param;
+            
+            if (is_down != was_down)
+            {
+                b32 alt_key_was_down = ((l_param & (1 << 29)) != 0);
+                
+                if ((vk_code == VK_F4) && alt_key_was_down)
+                {
+                    global_running = false;
+                }
+            } break;
+            
+            case WM_PAINT:
+            {
+                PAINTSTRUCT paint;
+                HDC device_context = BeginPaint(window, &paint);
+                struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
+                EndPaint(window, &paint);
+            } break;
+            
+            case WM_SIZE:
+            {
+            } break;
+            
+            case WM_DESTROY:
+            {
+                global_running = false;
+            } break;
+            
+            case WM_CLOSE:
+            {
+                global_running = false;
+            } break;
+            
+            case WM_ACTIVATEAPP:
+            {
+                OutputDebugString("WM_ACTIVATEAPP");
+            } break;
+            
+            default:
+            {
+                result = DefWindowProc(window, message, w_param, l_param);
+            }
+            break;
         }
-        break;
     }
     
     return result;
