@@ -1,3 +1,4 @@
+#include <dsound.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <windows.h>
@@ -48,7 +49,15 @@ internal void
 win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
 
 internal struct win32_window_dimension
-win32_get_window_dimension(HWND window);
+win32_get_window_dimension(HWND window, s32 samples_per_second, s32 buffer_size);
+
+internal void
+win32_init_d_sound(HWND window);
+
+// NOTE: DirectSoundCreate
+#define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID guid_device, LPDIRECTSOUND *ds, LPUNKNOWN unk_outer)
+typedef DIRECT_SOUND_CREATE(direct_sound_create);
+
 
 LRESULT CALLBACK
 win32_main_window_callback(HWND window, 
@@ -91,14 +100,16 @@ WinMain (HINSTANCE instance,
         
         if (window)
         {
+            HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
             win32_resize_dib_section(&global_back_buffer, 1280, 720);
+            win32_init_d_sound(window);
             global_running = true;
             int x_offset = 0;
             int y_offset = 0;
             
             while (global_running)
             {
-                HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
+                
                 MSG message;
                 while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
                 {
@@ -174,6 +185,36 @@ win32_get_window_dimension(HWND window)
     result.width = client_rect.right - client_rect.left;
     result.height = client_rect.bottom - client_rect.top;
     return result;
+}
+
+internal void
+win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
+{
+    HMODULE d_sound_library = LoadLibrary("dsound.dll");
+    
+    if (d_sound_library)
+    {
+        direct_sound_create *DirectSoundCreate = (direct_sound_create *)GetProcAddress(d_sound_library, "DirectSoundCreate");
+        IDirectSound *direct_sound;
+        if (DirectSoundCreate && SUCCEEDED(DirectSoundCreate(NULL, &direct_sound, NULL)))
+        {
+            if (direct_sound->lpVtbl->SetCooperativeLevel(direct_sound, window, DSSCL_PRIORITY) == DS_OK)
+            {
+                DSBUFFERDESC buffer_description = {0};
+                buffer_description.dwSize = sizeof(buffer_description);
+                buffer_description.dwFlags = DSBCAPS_PRIMARYBUFFER;
+                buffer_description.dwBufferBytes = 0;
+                buffer_description.dwReserved = 0;
+                buffer_description.lpwfxFormat = NULL;
+                buffer_description.guid3DAlgorithm = GUID_NULL;
+                IDirectSoundBuffer *primary_buffer;
+                
+                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &buffer_description, &primary_buffer, NULL))
+                {
+                }
+            }
+        }
+    }
 }
 
 LRESULT CALLBACK
