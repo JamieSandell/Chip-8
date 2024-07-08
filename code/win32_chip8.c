@@ -49,10 +49,10 @@ internal void
 win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
 
 internal struct win32_window_dimension
-win32_get_window_dimension(HWND window, s32 samples_per_second, s32 buffer_size);
+win32_get_window_dimension(HWND window);
 
 internal void
-win32_init_d_sound(HWND window);
+win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size);
 
 // NOTE: DirectSoundCreate
 #define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID guid_device, LPDIRECTSOUND *ds, LPUNKNOWN unk_outer)
@@ -198,6 +198,14 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
         IDirectSound *direct_sound;
         if (DirectSoundCreate && SUCCEEDED(DirectSoundCreate(NULL, &direct_sound, NULL)))
         {
+            WAVEFORMATEX wave_format = {0};
+            wave_format.wFormatTag = WAVE_FORMAT_PCM;
+            wave_format.nChannels = 2;
+            wave_format.nSamplesPerSec = samples_per_second;
+            wave_format.wBitsPerSample = 16;
+            wave_format.nBlockAlign = (wave_format.nChannels * wave_format.wBitsPerSample) / 8;
+            wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
+            
             if (direct_sound->lpVtbl->SetCooperativeLevel(direct_sound, window, DSSCL_PRIORITY) == DS_OK)
             {
                 DSBUFFERDESC buffer_description = {0};
@@ -211,7 +219,13 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
                 
                 if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &buffer_description, &primary_buffer, NULL))
                 {
+                    
                 }
+                
+                DSBUFFERDESC secondary_buffer_description = {0};
+                secondary_buffer_description.dwSize = sizeof(secondary_buffer_description);
+                secondary_buffer_description.dwBufferBytes = buffer_size;
+                secondary_buffer_description.lpwfxFormat = &wave_format;
             }
         }
     }
