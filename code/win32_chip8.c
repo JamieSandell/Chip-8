@@ -1,6 +1,7 @@
 #include <dsound.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <xaudio2.h>
 #include <windows.h>
 
 #define internal static
@@ -41,6 +42,7 @@ struct win32_window_dimension
 
 global_variable bool global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
+global_variable IDirectSoundBuffer *global_secondary_buffer;
 
 internal void
 render_weird_gradient(struct win32_offscreen_buffer *buffer, int x_offset, int y_offset);
@@ -53,6 +55,9 @@ win32_get_window_dimension(HWND window);
 
 internal void
 win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size);
+
+internal void
+win32_init_x_audio(void);
 
 // NOTE: DirectSoundCreate
 #define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID guid_device, LPDIRECTSOUND *ds, LPUNKNOWN unk_outer)
@@ -108,7 +113,14 @@ WinMain (HINSTANCE instance,
             int samples_per_second = 48000;
             int bytes_per_sample = sizeof(s16) * 2;
             int secondary_buffer_size = 2 * samples_per_second * bytes_per_sample;
+            int tone_hz = 256;
+            int square_wave_period = samples_per_second / tone_hz;
+            int half_square_wave_period = square_wave_period / 2;
+            int tone_volume = 3000;
+            int square_wave_counter = 0;
+            u32 running_sample_index = 0;
             win32_init_d_sound(window, samples_per_second, bytes_per_sample);
+            win32_init_x_audio();
             
             while (global_running)
             {
@@ -120,11 +132,58 @@ WinMain (HINSTANCE instance,
                     DispatchMessage(&message);
                 }
                 
-                render_weird_gradient(&global_back_buffer, x_offset, y_offset);
-                ++x_offset;
+                // NOTE: DirectSound test
                 
-                struct win32_window_dimension dimension = win32_get_window_dimension(window);
-                win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
+                if (global_secondary_buffer->lpVtbl->GetCurrentPosition(global_secondary_buffer, &play_cursor, &write_cursor) == DS_OK)
+                {
+                    DWORD byte_to_lock = running_sample_index * bytes_per_sample % secondary_buffer_size;
+                    DWORD bytes_to_write;
+                    VOID *region1;
+                    DWORD region1_size;
+                    VOID *region2;
+                    DWORD region2_size;
+                    DWORD play_cursor;
+                    DWORD write_cursor;
+                    
+                    if (global_secondary_buffer->lpVtbl->Lock(global_secondary_buffer,
+                                                              byte_to_lock, bytes_to_write,
+                                                              &region1, &region1_size,
+                                                              &region2, &region2_size,
+                                                              0) == DS_OK)
+                    {
+                        // TODO: Assert that region1_size and region2_size are valid
+                        
+                        s16 *sample_out = (s16 *)region_1;
+                        DWORD region1_sample_count = region1_size / bytes_per_sample;
+                        
+                        for (DWORD sample_index = 0; sample_index < region1_sample_count; ++sample_index)
+                        {
+                            
+                        }
+                        
+                        sample_out = (s16 *)region_2;
+                        DWORD region2_sample_count = region2_size / bytes_per_sample;
+                        
+                        for (DWORD sample_index = 0; sample_index < region2_sample_count; ++sample_index)
+                        {
+                            if (!square_wave_counter)
+                            {
+                                square_wave_counter = square_wave_period;
+                            }
+                            
+                            s16 sample_value = (square_wave_counter > half_square_wave_period) ? tone_volume : -tone_volume;
+                            *sample_out++ = sample_value;
+                            *sample_out++ = sample_value;
+                            --square_wave_counter;
+                        }
+                    }
+                    
+                    render_weird_gradient(&global_back_buffer, x_offset, y_offset);
+                    ++x_offset;
+                    
+                    struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                    win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
+                }
             }
         }
         else
@@ -240,9 +299,8 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
                 secondary_buffer_description.dwSize = sizeof(secondary_buffer_description);
                 secondary_buffer_description.dwBufferBytes = buffer_size;
                 secondary_buffer_description.lpwfxFormat = &wave_format;
-                IDirectSoundBuffer *secondary_buffer;
                 
-                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &secondary_buffer_description, &secondary_buffer, NULL) == DS_OK)
+                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &secondary_buffer_description, &global_secondary_buffer, NULL) == DS_OK)
                 {
                     OutputDebugString("Secondary buffer created.\n");
                 }
@@ -255,6 +313,37 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
             {
                 // TODO: Diagnostics
             }
+        }
+        else
+        {
+            // TODO: Diagnostics
+        }
+    }
+    else
+    {
+        // TODO: Diagnostics
+    }
+}
+
+internal void
+win32_init_x_audio(void)
+{
+    IXAudio2 *x_audio = NULL;
+    if (XAudio2Create(&x_audio, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK)
+    {
+        OutputDebugString("Instance of XAudio2 engine created.\n");
+        IXAudio2MasteringVoice *master_voice = NULL;
+        
+        if (x_audio->lpVtbl->CreateMasteringVoice(x_audio,
+                                                  &master_voice,
+                                                  XAUDIO2_DEFAULT_CHANNELS,
+                                                  XAUDIO2_DEFAULT_SAMPLERATE,
+                                                  0,
+                                                  NULL,
+                                                  NULL,
+                                                  AudioCategory_GameEffects) == S_OK)
+        {
+            OutputDebugString("Mastering voice reated.\n");
         }
         else
         {
