@@ -102,10 +102,13 @@ WinMain (HINSTANCE instance,
         {
             HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
             win32_resize_dib_section(&global_back_buffer, 1280, 720);
-            win32_init_d_sound(window);
             global_running = true;
             int x_offset = 0;
             int y_offset = 0;
+            int samples_per_second = 48000;
+            int bytes_per_sample = sizeof(s16) * 2;
+            int secondary_buffer_size = 2 * samples_per_second * bytes_per_sample;
+            win32_init_d_sound(window, samples_per_second, bytes_per_sample);
             
             while (global_running)
             {
@@ -126,7 +129,7 @@ WinMain (HINSTANCE instance,
         }
         else
         {
-            //TODO: Logging
+            //TODO: Diagnostics
         }
         
         return 0;
@@ -217,17 +220,50 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size)
                 buffer_description.guid3DAlgorithm = GUID_NULL;
                 IDirectSoundBuffer *primary_buffer;
                 
-                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &buffer_description, &primary_buffer, NULL))
+                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &buffer_description, &primary_buffer, NULL) == DS_OK)
                 {
-                    
+                    if (primary_buffer->lpVtbl->SetFormat(primary_buffer, &wave_format) == DS_OK)
+                    {
+                        OutputDebugString("Primary buffer was set.\n");
+                    }
+                    else
+                    {
+                        // TODO: Diagnostics
+                    }
+                }
+                else
+                {
+                    // TODO: Diagnostics
                 }
                 
                 DSBUFFERDESC secondary_buffer_description = {0};
                 secondary_buffer_description.dwSize = sizeof(secondary_buffer_description);
                 secondary_buffer_description.dwBufferBytes = buffer_size;
                 secondary_buffer_description.lpwfxFormat = &wave_format;
+                IDirectSoundBuffer *secondary_buffer;
+                
+                if (direct_sound->lpVtbl->CreateSoundBuffer(direct_sound, &secondary_buffer_description, &secondary_buffer, NULL) == DS_OK)
+                {
+                    OutputDebugString("Secondary buffer created.\n");
+                }
+                else
+                {
+                    // TODO: Diagnostics
+                }
+            }
+            else
+            {
+                // TODO: Diagnostics
             }
         }
+        else
+        {
+            // TODO: Diagnostics
+        }
+    }
+    else
+    {
+        // TODO: Diagnostics
     }
 }
 
