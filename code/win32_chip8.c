@@ -31,6 +31,17 @@ struct win32_offscreen_buffer
     int pitch;
     int width;
     int bytes_per_pixel;
+    int tone_volume;
+};
+
+struct win32_sound_buffer
+{
+    DWORD play_cursor;
+    DWORD write_cursor;
+    u32 running_sample_index;
+    int secondary_buffer_size;
+    int bytes_per_sample;
+    int half_square_wave_period;
 };
 
 struct win32_window_dimension
@@ -58,6 +69,9 @@ win32_init_d_sound(HWND window, s32 samples_per_second, s32 buffer_size);
 
 internal void
 win32_init_x_audio(void);
+
+internal void
+win32_update_d_sound(void);
 
 // NOTE: DirectSoundCreate
 #define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID guid_device, LPDIRECTSOUND *ds, LPUNKNOWN unk_outer)
@@ -113,18 +127,17 @@ WinMain (HINSTANCE instance,
             int samples_per_second = 48000;
             int bytes_per_sample = sizeof(s16) * 2;
             int secondary_buffer_size = 2 * samples_per_second * bytes_per_sample;
-            int tone_hz = 256;
+            int tone_hz = 1000;
             int square_wave_period = samples_per_second / tone_hz;
             int half_square_wave_period = square_wave_period / 2;
             int tone_volume = 3000;
-            int square_wave_counter = 0;
             u32 running_sample_index = 0;
-            win32_init_d_sound(window, samples_per_second, bytes_per_sample);
-            win32_init_x_audio();
+            win32_init_d_sound(window, samples_per_second, secondary_buffer_size);
+            global_secondary_buffer->lpVtbl->Play(global_secondary_buffer, 0, 0, DSBPLAY_LOOPING);
+            //win32_init_x_audio();
             
             while (global_running)
             {
-                
                 MSG message;
                 while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
                 {
@@ -133,57 +146,16 @@ WinMain (HINSTANCE instance,
                 }
                 
                 // NOTE: DirectSound test
+                DWORD play_cursor;
+                DWORD write_cursor;
                 
-                if (global_secondary_buffer->lpVtbl->GetCurrentPosition(global_secondary_buffer, &play_cursor, &write_cursor) == DS_OK)
-                {
-                    DWORD byte_to_lock = running_sample_index * bytes_per_sample % secondary_buffer_size;
-                    DWORD bytes_to_write;
-                    VOID *region1;
-                    DWORD region1_size;
-                    VOID *region2;
-                    DWORD region2_size;
-                    DWORD play_cursor;
-                    DWORD write_cursor;
-                    
-                    if (global_secondary_buffer->lpVtbl->Lock(global_secondary_buffer,
-                                                              byte_to_lock, bytes_to_write,
-                                                              &region1, &region1_size,
-                                                              &region2, &region2_size,
-                                                              0) == DS_OK)
-                    {
-                        // TODO: Assert that region1_size and region2_size are valid
-                        
-                        s16 *sample_out = (s16 *)region_1;
-                        DWORD region1_sample_count = region1_size / bytes_per_sample;
-                        
-                        for (DWORD sample_index = 0; sample_index < region1_sample_count; ++sample_index)
-                        {
-                            
-                        }
-                        
-                        sample_out = (s16 *)region_2;
-                        DWORD region2_sample_count = region2_size / bytes_per_sample;
-                        
-                        for (DWORD sample_index = 0; sample_index < region2_sample_count; ++sample_index)
-                        {
-                            if (!square_wave_counter)
-                            {
-                                square_wave_counter = square_wave_period;
-                            }
-                            
-                            s16 sample_value = (square_wave_counter > half_square_wave_period) ? tone_volume : -tone_volume;
-                            *sample_out++ = sample_value;
-                            *sample_out++ = sample_value;
-                            --square_wave_counter;
-                        }
-                    }
-                    
-                    render_weird_gradient(&global_back_buffer, x_offset, y_offset);
-                    ++x_offset;
-                    
-                    struct win32_window_dimension dimension = win32_get_window_dimension(window);
-                    win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
-                }
+                win32_update_d_sound();
+                
+                render_weird_gradient(&global_back_buffer, x_offset, y_offset);
+                ++x_offset;
+                
+                struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
             }
         }
         else
@@ -445,4 +417,63 @@ win32_resize_dib_section(struct win32_offscreen_buffer *buffer, int width, int h
     buffer->pitch = buffer->width * buffer->bytes_per_pixel;
     int bitmap_memory_size = buffer->bytes_per_pixel * (buffer->width * buffer->height);
     buffer->memory = VirtualAlloc(0, bitmap_memory_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+}
+
+internal void
+win32_update_d_sound(void)
+{
+    if (global_secondary_buffer->lpVtbl->GetCurrentPosition(global_secondary_buffer, &play_cursor, &write_cursor) == DS_OK)
+    {
+        DWORD byte_to_lock = running_sample_index * bytes_per_sample % secondary_buffer_size;
+        DWORD bytes_to_write;
+        
+        if (byte_to_lock > play_cursor)
+        {
+            // Play cursor is behind
+            bytes_to_write = secondary_buffer_size - byte_to_lock; // region 1
+            bytes_to_write += play_cursor; // region 2
+        }
+        else
+        {
+            // Play cursor is in front
+            bytes_to_write = play_cursor - byte_to_lock; // region 1
+        }
+        
+        VOID *region1;
+        DWORD region1_size;
+        VOID *region2;
+        DWORD region2_size;
+        
+        if (global_secondary_buffer->lpVtbl->Lock(global_secondary_buffer,
+                                                  byte_to_lock, bytes_to_write,
+                                                  &region1, &region1_size,
+                                                  &region2, &region2_size,
+                                                  0) == DS_OK)
+        {
+            // TODO: Assert that region1_size and region2_size are valid
+            
+            s16 *sample_out = (s16 *)region1;
+            DWORD region1_sample_count = region1_size / bytes_per_sample;
+            
+            for (DWORD sample_index = 0; sample_index < region1_sample_count; ++sample_index)
+            {
+                s16 sample_value = ((running_sample_index++ / half_square_wave_period) % 2) ? tone_volume : -tone_volume;
+                *sample_out++ = sample_value;
+                *sample_out++ = sample_value;
+            }
+            
+            sample_out = (s16 *)region2;
+            DWORD region2_sample_count = region2_size / bytes_per_sample;
+            
+            for (DWORD sample_index = 0; sample_index < region2_sample_count; ++sample_index)
+            {
+                s16 sample_value = ((running_sample_index++ / half_square_wave_period) % 2) ? tone_volume : -tone_volume;
+                *sample_out++ = sample_value;
+                *sample_out++ = sample_value;
+            }
+            
+            global_secondary_buffer->lpVtbl->Unlock(global_secondary_buffer, region1, region1_size, region2, region2_size);
+        }
+        
+    }
 }
