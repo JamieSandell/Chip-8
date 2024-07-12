@@ -42,6 +42,11 @@ struct win32_sound_buffer
     int secondary_buffer_size;
     int bytes_per_sample;
     int half_square_wave_period;
+    int tone_hz;
+    int square_wave_period;
+    int samples_per_second;
+    int tone_volume;
+    bool is_playing;
 };
 
 struct win32_window_dimension
@@ -53,6 +58,7 @@ struct win32_window_dimension
 
 global_variable bool global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
+global_variable struct win32_sound_buffer global_sound_buffer;
 global_variable IDirectSoundBuffer *global_secondary_buffer;
 
 internal void
@@ -124,16 +130,18 @@ WinMain (HINSTANCE instance,
             global_running = true;
             int x_offset = 0;
             int y_offset = 0;
-            int samples_per_second = 48000;
-            int bytes_per_sample = sizeof(s16) * 2;
-            int secondary_buffer_size = 2 * samples_per_second * bytes_per_sample;
-            int tone_hz = 1000;
-            int square_wave_period = samples_per_second / tone_hz;
-            int half_square_wave_period = square_wave_period / 2;
-            int tone_volume = 3000;
-            u32 running_sample_index = 0;
-            win32_init_d_sound(window, samples_per_second, secondary_buffer_size);
-            global_secondary_buffer->lpVtbl->Play(global_secondary_buffer, 0, 0, DSBPLAY_LOOPING);
+            
+            global_sound_buffer.bytes_per_sample = sizeof(s16) * 2;
+            global_sound_buffer.tone_hz = 1000;
+            global_sound_buffer.samples_per_second = 48000;
+            global_sound_buffer.tone_volume = 3000;
+            global_sound_buffer.running_sample_index = 0;
+            global_sound_buffer.square_wave_period = global_sound_buffer.samples_per_second / global_sound_buffer.tone_hz;
+            global_sound_buffer.half_square_wave_period = global_sound_buffer.square_wave_period / 2;
+            global_sound_buffer.secondary_buffer_size = 2 * global_sound_buffer.samples_per_second * global_sound_buffer.bytes_per_sample;
+            global_sound_buffer.is_playing = false;
+            win32_init_d_sound(window, global_sound_buffer.samples_per_second, global_sound_buffer.secondary_buffer_size);
+            
             //win32_init_x_audio();
             
             while (global_running)
@@ -422,21 +430,21 @@ win32_resize_dib_section(struct win32_offscreen_buffer *buffer, int width, int h
 internal void
 win32_update_d_sound(void)
 {
-    if (global_secondary_buffer->lpVtbl->GetCurrentPosition(global_secondary_buffer, &play_cursor, &write_cursor) == DS_OK)
+    if (global_secondary_buffer->lpVtbl->GetCurrentPosition(global_secondary_buffer, &global_sound_buffer.play_cursor, &global_sound_buffer.write_cursor) == DS_OK)
     {
-        DWORD byte_to_lock = running_sample_index * bytes_per_sample % secondary_buffer_size;
+        DWORD byte_to_lock = global_sound_buffer.running_sample_index * global_sound_buffer.bytes_per_sample % global_sound_buffer.secondary_buffer_size;
         DWORD bytes_to_write;
         
-        if (byte_to_lock > play_cursor)
+        if (byte_to_lock > global_sound_buffer.play_cursor)
         {
             // Play cursor is behind
-            bytes_to_write = secondary_buffer_size - byte_to_lock; // region 1
-            bytes_to_write += play_cursor; // region 2
+            bytes_to_write = global_sound_buffer.secondary_buffer_size - byte_to_lock; // region 1
+            bytes_to_write += global_sound_buffer.play_cursor; // region 2
         }
         else
         {
             // Play cursor is in front
-            bytes_to_write = play_cursor - byte_to_lock; // region 1
+            bytes_to_write = global_sound_buffer.play_cursor - byte_to_lock; // region 1
         }
         
         VOID *region1;
@@ -453,27 +461,32 @@ win32_update_d_sound(void)
             // TODO: Assert that region1_size and region2_size are valid
             
             s16 *sample_out = (s16 *)region1;
-            DWORD region1_sample_count = region1_size / bytes_per_sample;
+            DWORD region1_sample_count = region1_size / global_sound_buffer.bytes_per_sample;
             
             for (DWORD sample_index = 0; sample_index < region1_sample_count; ++sample_index)
             {
-                s16 sample_value = ((running_sample_index++ / half_square_wave_period) % 2) ? tone_volume : -tone_volume;
+                s16 sample_value = ((global_sound_buffer.running_sample_index++ / global_sound_buffer.half_square_wave_period) % 2) ? global_sound_buffer.tone_volume : -global_sound_buffer.tone_volume;
                 *sample_out++ = sample_value;
                 *sample_out++ = sample_value;
             }
             
             sample_out = (s16 *)region2;
-            DWORD region2_sample_count = region2_size / bytes_per_sample;
+            DWORD region2_sample_count = region2_size / global_sound_buffer.bytes_per_sample;
             
             for (DWORD sample_index = 0; sample_index < region2_sample_count; ++sample_index)
             {
-                s16 sample_value = ((running_sample_index++ / half_square_wave_period) % 2) ? tone_volume : -tone_volume;
+                s16 sample_value = ((global_sound_buffer.running_sample_index++ / global_sound_buffer.half_square_wave_period) % 2) ? global_sound_buffer.tone_volume : -global_sound_buffer.tone_volume;
                 *sample_out++ = sample_value;
                 *sample_out++ = sample_value;
             }
             
             global_secondary_buffer->lpVtbl->Unlock(global_secondary_buffer, region1, region1_size, region2, region2_size);
         }
-        
+    }
+    
+    if (!global_sound_buffer.is_playing)
+    {
+        global_secondary_buffer->lpVtbl->Play(global_secondary_buffer, 0, 0, DSBPLAY_LOOPING);
+        global_sound_buffer.is_playing = true;
     }
 }
