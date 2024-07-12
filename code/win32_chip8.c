@@ -48,11 +48,9 @@ struct win32_sound_output
     int wave_period;
     int samples_per_second;
     int tone_volume;
-    b32 is_playing;
     IDirectSoundBuffer *secondary_buffer;
-    DWORD play_cursor;
-    DWORD write_cursor;
     int latency_sample_count;
+    f32 t_sine;
 };
 
 struct win32_window_dimension
@@ -137,15 +135,15 @@ WinMain (HINSTANCE instance,
             
             struct win32_sound_output sound_output = {};
             sound_output.bytes_per_sample = sizeof(s16) * 2;
-            sound_output.tone_hz = 1000;
+            sound_output.tone_hz = 256;
             sound_output.samples_per_second = 48000;
             sound_output.tone_volume = 3000;
             sound_output.running_sample_index = 0;
             sound_output.wave_period = sound_output.samples_per_second / sound_output.tone_hz;
-            sound_output.secondary_buffer_size = 2 * sound_output.samples_per_second * sound_output.bytes_per_sample;
-            sound_output.latency_sample_count = sound_output.samples_per_second / 60;
+            sound_output.secondary_buffer_size = sound_output.samples_per_second * sound_output.bytes_per_sample;
+            sound_output.latency_sample_count = sound_output.samples_per_second / 15;
             win32_init_d_sound(window, &sound_output);
-            win32_fill_sound_buffer(&sound_output, 0, (sound_output.latency_sample_count * sound_output.bytes_per_sample));
+            win32_fill_sound_buffer(&sound_output, 0, sound_output.latency_sample_count * sound_output.bytes_per_sample);
             sound_output.secondary_buffer->lpVtbl->Play(sound_output.secondary_buffer, 0, 0, DSBPLAY_LOOPING);
             
             //win32_init_x_audio();
@@ -163,9 +161,9 @@ WinMain (HINSTANCE instance,
                 DWORD play_cursor;
                 DWORD write_cursor;
                 
-                if (sound_output.secondary_buffer->lpVtbl->GetCurrentPosition(sound_output.secondary_buffer, &sound_output.play_cursor, &sound_output.write_cursor) == DS_OK)
+                if (sound_output.secondary_buffer->lpVtbl->GetCurrentPosition(sound_output.secondary_buffer, &play_cursor, &write_cursor) == DS_OK)
                 {
-                    DWORD byte_to_lock = (sound_output.running_sample_index * sound_output.bytes_per_sample) % sound_output.secondary_buffer_size;
+                    DWORD byte_to_lock = ((sound_output.running_sample_index * sound_output.bytes_per_sample) % sound_output.secondary_buffer_size);
                     DWORD bytes_to_write;
                     DWORD target_cursor = ((play_cursor + (sound_output.latency_sample_count * sound_output.bytes_per_sample)) % sound_output.secondary_buffer_size);
                     
@@ -472,11 +470,11 @@ win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_l
         
         for (DWORD sample_index = 0; sample_index < region1_sample_count; ++sample_index)
         {
-            f32 t = 2.0f * Pi32 * (f32)sound_output->running_sample_index / (f32)sound_output->wave_period;
-            f32 sine_value = sinf(t);
-            s16 sample_value = sine_value * sound_output->tone_volume;
+            f32 sine_value = sinf(sound_output->t_sine);
+            s16 sample_value = (s16)(sine_value * sound_output->tone_volume);
             *sample_out++ = sample_value;
             *sample_out++ = sample_value;
+            sound_output->t_sine += (2.0f * Pi32 * 1.0f) / (f32)sound_output->wave_period;
             sound_output->running_sample_index++;
         }
         
@@ -485,11 +483,11 @@ win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_l
         
         for (DWORD sample_index = 0; sample_index < region2_sample_count; ++sample_index)
         {
-            f32 t = 2.0f * Pi32 * (f32)sound_output->running_sample_index / (f32)sound_output->wave_period;
-            f32 sine_value = sinf(t);
-            s16 sample_value = sine_value * sound_output->tone_volume;
+            f32 sine_value = sinf(sound_output->t_sine);
+            s16 sample_value = (s16)(sine_value * sound_output->tone_volume);
             *sample_out++ = sample_value;
             *sample_out++ = sample_value;
+            sound_output->t_sine += (2.0f * Pi32 * 1.0f) / (f32)sound_output->wave_period;
             sound_output->running_sample_index++;
         }
         
