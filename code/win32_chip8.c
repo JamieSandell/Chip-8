@@ -102,6 +102,10 @@ WinMain (HINSTANCE instance,
          LPSTR     command_line,
          int       show_command)
 {
+    LARGE_INTEGER perf_count_frequency_result;
+    QueryPerformanceFrequency(&perf_count_frequency_result);
+    s64 perf_count_frequency = perf_count_frequency_result.QuadPart;
+    
     WNDCLASS window_class = {0};
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     window_class.lpfnWndProc = win32_main_window_callback;
@@ -130,6 +134,8 @@ WinMain (HINSTANCE instance,
             HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
             win32_resize_dib_section(&global_back_buffer, 1280, 720);
             global_running = true;
+            LARGE_INTEGER last_counter;
+            QueryPerformanceCounter(&last_counter);
             int x_offset = 0;
             int y_offset = 0;
             
@@ -187,6 +193,15 @@ WinMain (HINSTANCE instance,
                 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
+                
+                LARGE_INTEGER end_counter;
+                QueryPerformanceCounter(&end_counter);
+                s64 counter_elapsed = end_counter.QuadPart - last_counter.QuadPart;
+                s32 ms_per_frame = (s32)((1000 * counter_elapsed) / perf_count_frequency);
+                char buffer[256];
+                wsprintfA(buffer, "ms/frame: %dms\n", ms_per_frame);
+                OutputDebugStringA(buffer);
+                last_counter = end_counter;
             }
         }
         else
