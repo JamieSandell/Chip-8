@@ -1,6 +1,7 @@
 #include <dsound.h>
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <xaudio2.h>
 #include <windows.h>
 
@@ -136,6 +137,7 @@ WinMain (HINSTANCE instance,
             global_running = true;
             LARGE_INTEGER last_counter;
             QueryPerformanceCounter(&last_counter);
+            u64 last_cycle_count = __rdtsc();
             int x_offset = 0;
             int y_offset = 0;
             
@@ -196,12 +198,17 @@ WinMain (HINSTANCE instance,
                 
                 LARGE_INTEGER end_counter;
                 QueryPerformanceCounter(&end_counter);
+                u64 end_cycle_count = __rdtsc();
                 s64 counter_elapsed = end_counter.QuadPart - last_counter.QuadPart;
-                s32 ms_per_frame = (s32)((1000 * counter_elapsed) / perf_count_frequency);
+                s64 cycles_elapsed = end_cycle_count - last_cycle_count;
+                f32 ms_per_frame = 1000.0f * (f32)counter_elapsed / (f32)perf_count_frequency;
+                s32 fps = (perf_count_frequency / counter_elapsed);
+                s32 mega_cycles_per_frame = cycles_elapsed / (1000 * 1000);
                 char buffer[256];
-                wsprintfA(buffer, "ms/frame: %dms\n", ms_per_frame);
+                sprintf(buffer, "%d MS Per Frame, %d FPS, %d Megacycles Per Frame\n", ms_per_frame, fps, mega_cycles_per_frame);
                 OutputDebugStringA(buffer);
                 last_counter = end_counter;
+                last_cycle_count = end_cycle_count;
             }
         }
         else
