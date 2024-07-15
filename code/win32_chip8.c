@@ -60,12 +60,10 @@ struct win32_window_dimension
     int height;
 };
 
+#include "chip8.c"
 
 global_variable b32 global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
-
-internal void
-render_weird_gradient(struct win32_offscreen_buffer *buffer, int x_offset, int y_offset);
 
 internal void
 win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
@@ -190,8 +188,7 @@ WinMain (HINSTANCE instance,
                     win32_fill_sound_buffer(&sound_output, byte_to_lock, bytes_to_write);
                 }
                 
-                render_weird_gradient(&global_back_buffer, x_offset, y_offset);
-                ++x_offset;
+                emulator_update_and_render();
                 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
@@ -202,11 +199,13 @@ WinMain (HINSTANCE instance,
                 s64 counter_elapsed = end_counter.QuadPart - last_counter.QuadPart;
                 s64 cycles_elapsed = end_cycle_count - last_cycle_count;
                 f32 ms_per_frame = 1000.0f * (f32)counter_elapsed / (f32)perf_count_frequency;
-                s32 fps = (perf_count_frequency / counter_elapsed);
-                s32 mega_cycles_per_frame = cycles_elapsed / (1000 * 1000);
+                f32 fps = (f32)(perf_count_frequency / (f32) counter_elapsed);
+                f32 mega_cycles_per_frame = (f32)cycles_elapsed / (1000.0f * 1000.0f);
+#if 0
                 char buffer[256];
-                sprintf(buffer, "%d MS Per Frame, %d FPS, %d Megacycles Per Frame\n", ms_per_frame, fps, mega_cycles_per_frame);
+                sprintf(buffer, "%.02f MS Per Frame, %.02ff FPS, %.02f Megacycles Per Frame\n", ms_per_frame, fps, mega_cycles_per_frame);
                 OutputDebugStringA(buffer);
+#endif
                 last_counter = end_counter;
                 last_cycle_count = end_cycle_count;
             }
@@ -220,28 +219,6 @@ WinMain (HINSTANCE instance,
     }
     
     return -1;
-}
-
-internal void
-render_weird_gradient(struct win32_offscreen_buffer *buffer, int x_offset, int y_offset)
-{
-    u8 *row = (u8 *)buffer->memory;
-    
-    for (int y = 0; y < buffer->height; ++y)
-    {
-        u32 *pixel = (u32 *)row;
-        
-        for (int x = 0; x < buffer->width; ++x)
-        {
-            u8 red = 0;
-            u8 green = (u8)(y + y_offset);
-            u8 blue = (u8)(x + x_offset);
-            
-            *pixel++ = red << 16 | green << 8 | blue; // << 0
-        }
-        
-        row += buffer->pitch;
-    }
 }
 
 internal void
