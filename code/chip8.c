@@ -1,7 +1,26 @@
 #include "chip8.h"
 
 void
-emulator_update_and_render(struct game_offscreen_buffer *buffer)
+emulator_output_sound(struct emulator_sound_output_buffer *sound_buffer)
+{
+    local_persist f32 t_sine;
+    s16 tone_volume = 3000;
+    int tone_hz = 256;
+    int wave_period = sound_buffer->samples_per_second / tone_hz;
+    s16 *sample_out = sound_buffer->samples;
+    
+    for (int sample_index = 0; sample_index < sound_buffer->sample_count; ++sample_index)
+    {
+        f32 sine_value = sinf(t_sine);
+        s16 sample_value = (s16)(sine_value * tone_volume);
+        *sample_out++ = sample_value;
+        *sample_out++ = sample_value;
+        t_sine += (2.0f * Pi32 * 1.0f) / (f32)wave_period;
+    }
+}
+
+void
+emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer)
 {
     int x_offset = 0;
     int y_offset = 0;
@@ -9,7 +28,7 @@ emulator_update_and_render(struct game_offscreen_buffer *buffer)
 }
 
 internal void
-render_weird_gradient(struct game_offscreen_buffer *buffer, int x_offset, int y_offset)
+render_weird_gradient(struct emulator_offscreen_buffer *buffer, int x_offset, int y_offset)
 {
     u8 *row = (u8 *)buffer->memory;
     

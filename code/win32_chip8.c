@@ -4,10 +4,8 @@
 #include <stdio.h>
 #include <xaudio2.h>
 #include <windows.h>
+#include "win32_chip8.h"
 
-#define internal static
-#define local_persist static
-#define global_variable static
 #define Pi32 3.14159265359f
 
 typedef uint8_t u8;
@@ -63,36 +61,6 @@ struct win32_window_dimension
 
 global_variable b32 global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
-
-internal void
-win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
-
-internal struct win32_window_dimension
-win32_get_window_dimension(HWND window);
-
-internal void
-win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_lock, DWORD bytes_to_write);
-
-internal void
-win32_init_d_sound(HWND window, struct win32_sound_output *sound_output);
-
-internal void
-win32_init_x_audio(void);
-
-// NOTE: DirectSoundCreate
-#define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID guid_device, LPDIRECTSOUND *ds, LPUNKNOWN unk_outer)
-typedef DIRECT_SOUND_CREATE(direct_sound_create);
-
-
-LRESULT CALLBACK
-win32_main_window_callback(HWND window, 
-                           UINT message,
-                           WPARAM w_param,
-                           LPARAM l_param);
-
-
-internal void
-win32_resize_dib_section(struct win32_offscreen_buffer *buffer, int width, int height);
 
 int CALLBACK
 WinMain (HINSTANCE instance,
@@ -184,15 +152,21 @@ WinMain (HINSTANCE instance,
                         bytes_to_write = target_cursor - byte_to_lock; // region 1
                     }
                     
-                    win32_fill_sound_buffer(&sound_output, byte_to_lock, bytes_to_write);
+                    win32_fill_sound_buffer(&sound_output, byte_to_lock, bytes_to_write, &sound_buffer);
                 }
+                
+                s16 samples[(48000 / 30) * 2];
+                struct game_sound_output_buffer sound_buffer = {0};
+                sound_buffer.samples_per_second = sound_output.samples_per_second;
+                sound_buffer.sample_count = sound_buffer.samples_per_second / 30;
+                sound_buffer.samples = samples;
                 
                 struct game_offscreen_buffer bitmap_buffer = {0};
                 bitmap_buffer.memory = global_back_buffer.memory;
                 bitmap_buffer.width = global_back_buffer.width;
                 bitmap_buffer.height = global_back_buffer.height;
                 bitmap_buffer.pitch = global_back_buffer.pitch;
-                emulator_update_and_render(&bitmap_buffer);
+                emulator_update_and_render(&bitmap_buffer, &sound_buffer);
                 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
