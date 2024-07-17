@@ -37,7 +37,6 @@ struct win32_offscreen_buffer
     int pitch;
     int width;
     int bytes_per_pixel;
-    int tone_volume;
 };
 
 struct win32_sound_output
@@ -188,7 +187,12 @@ WinMain (HINSTANCE instance,
                     win32_fill_sound_buffer(&sound_output, byte_to_lock, bytes_to_write);
                 }
                 
-                emulator_update_and_render();
+                struct game_offscreen_buffer bitmap_buffer = {0};
+                bitmap_buffer.memory = global_back_buffer.memory;
+                bitmap_buffer.width = global_back_buffer.width;
+                bitmap_buffer.height = global_back_buffer.height;
+                bitmap_buffer.pitch = global_back_buffer.pitch;
+                emulator_update_and_render(&bitmap_buffer);
                 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);

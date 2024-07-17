@@ -1,12 +1,15 @@
 #include "chip8.h"
 
 void
-emulator_update_and_render(void)
+emulator_update_and_render(struct game_offscreen_buffer *buffer)
 {
+    int x_offset = 0;
+    int y_offset = 0;
+    render_weird_gradient(buffer, x_offset, y_offset);
 }
 
 internal void
-render_weird_gradient(struct win32_offscreen_buffer *buffer, int x_offset, int y_offset)
+render_weird_gradient(struct game_offscreen_buffer *buffer, int x_offset, int y_offset)
 {
     u8 *row = (u8 *)buffer->memory;
     
