@@ -8,13 +8,16 @@
 #define global_variable static
 
 internal void
+win32_clear_sound_buffer(struct win32_sound_output *buffer);
+
+internal void
 win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
 
 internal struct win32_window_dimension
 win32_get_window_dimension(HWND window);
 
 internal void
-win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_lock, DWORD bytes_to_write);
+win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_lock, DWORD bytes_to_write, struct emulator_sound_output_buffer *source);
 
 internal void
 win32_init_d_sound(HWND window, struct win32_sound_output *sound_output);

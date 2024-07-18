@@ -15,7 +15,7 @@ struct emulator_sound_output_buffer
 {
     int samples_per_second;
     int sample_count;
-    s16 samples;
+    s16 *samples;
 };
 
 // TODO: Services that the platform layer provides to the emulator.
