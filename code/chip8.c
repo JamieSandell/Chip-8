@@ -24,6 +24,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emul
 {
     int x_offset = 0;
     int y_offset = 0;
+    emulator_output_sound(sound_buffer);
     render_weird_gradient(buffer, x_offset, y_offset);
 }
 

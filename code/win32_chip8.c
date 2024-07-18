@@ -6,57 +6,6 @@
 #include <windows.h>
 #include "win32_chip8.h"
 
-#define Pi32 3.14159265359f
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-typedef int8_t s8;
-typedef int16_t s16;
-typedef int32_t s32;
-typedef int64_t s64;
-
-typedef float f32;
-typedef double f64;
-
-typedef s32 b32;
-enum {false, true};
-
-struct win32_offscreen_buffer
-{
-    // NOTE: Pixels are always 32-bits wide.
-    // Memory order:  0x BB GG RR xx
-    // Little endian: 0x xx RR GG BB
-    int height;
-    BITMAPINFO info;
-    void *memory;
-    int pitch;
-    int width;
-    int bytes_per_pixel;
-};
-
-struct win32_sound_output
-{
-    u32 running_sample_index;
-    int secondary_buffer_size;
-    int bytes_per_sample;
-    int tone_hz;
-    int wave_period;
-    int samples_per_second;
-    int tone_volume;
-    IDirectSoundBuffer *secondary_buffer;
-    int latency_sample_count;
-    f32 t_sine;
-};
-
-struct win32_window_dimension
-{
-    int width;
-    int height;
-};
-
 #include "chip8.c"
 
 global_variable b32 global_running;
@@ -103,16 +52,11 @@ WinMain (HINSTANCE instance,
             LARGE_INTEGER last_counter;
             QueryPerformanceCounter(&last_counter);
             u64 last_cycle_count = __rdtsc();
-            int x_offset = 0;
-            int y_offset = 0;
             
             struct win32_sound_output sound_output = {};
             sound_output.bytes_per_sample = sizeof(s16) * 2;
-            sound_output.tone_hz = 256;
             sound_output.samples_per_second = 48000;
-            sound_output.tone_volume = 3000;
             sound_output.running_sample_index = 0;
-            sound_output.wave_period = sound_output.samples_per_second / sound_output.tone_hz;
             sound_output.secondary_buffer_size = sound_output.samples_per_second * sound_output.bytes_per_sample;
             sound_output.latency_sample_count = sound_output.samples_per_second / 15;
             win32_init_d_sound(window, &sound_output);
@@ -160,7 +104,8 @@ WinMain (HINSTANCE instance,
                     is_sound_valid = true;
                 }
                 
-                s16 samples[(48000 / 30) * 2];
+                s16 *samples = (s16 *)VirtualAlloc(0, sound_output.secondary_buffer_size,
+                                                   MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
                 struct emulator_sound_output_buffer sound_buffer = {0};
                 sound_buffer.samples_per_second = sound_output.samples_per_second;
                 sound_buffer.sample_count = bytes_to_write / sound_output.bytes_per_sample;

@@ -7,6 +7,53 @@
 #define local_persist static
 #define global_variable static
 
+#define Pi32 3.14159265359f
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+
+typedef float f32;
+typedef double f64;
+
+typedef s32 b32;
+enum {false, true};
+
+struct win32_offscreen_buffer
+{
+    // NOTE: Pixels are always 32-bits wide.
+    // Memory order:  0x BB GG RR xx
+    // Little endian: 0x xx RR GG BB
+    int height;
+    BITMAPINFO info;
+    void *memory;
+    int pitch;
+    int width;
+    int bytes_per_pixel;
+};
+
+struct win32_sound_output
+{
+    u32 running_sample_index;
+    int secondary_buffer_size;
+    int bytes_per_sample;
+    int samples_per_second;
+    IDirectSoundBuffer *secondary_buffer;
+    int latency_sample_count;
+};
+
+struct win32_window_dimension
+{
+    int width;
+    int height;
+};
+
 internal void
 win32_clear_sound_buffer(struct win32_sound_output *buffer);
 
