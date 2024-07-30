@@ -67,12 +67,8 @@ WinMain (HINSTANCE instance,
             
             while (global_running)
             {
-                MSG message;
-                while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
-                {
-                    TranslateMessage(&message);
-                    DispatchMessage(&message);
-                }
+                struct emulator_keyboard_input input = {0};
+                win32_process_pending_messages(&input);
                 
                 // NOTE: DirectSound test
                 DWORD byte_to_lock;
@@ -116,7 +112,8 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.width = global_back_buffer.width;
                 bitmap_buffer.height = global_back_buffer.height;
                 bitmap_buffer.pitch = global_back_buffer.pitch;
-                emulator_update_and_render(&bitmap_buffer, &sound_buffer);
+                
+                emulator_update_and_render(&bitmap_buffer, &sound_buffer, &input);
                 
                 if (is_sound_valid)
                 {
@@ -338,54 +335,42 @@ win32_main_window_callback(HWND window,
         case WM_KEYDOWN:
         case WM_KEYUP:
         {
-            b32 is_down = ((l_param & (1 << 31)) == 0);
-            b32 was_down = ((l_param & (1 << 30)) != 0);
-            u32 vk_code = w_param;
-            
-            if (is_down != was_down)
-            {
-                b32 alt_key_was_down = ((l_param & (1 << 29)) != 0);
-                
-                if ((vk_code == VK_F4) && alt_key_was_down)
-                {
-                    global_running = false;
-                }
-            } break;
-            
-            case WM_PAINT:
-            {
-                PAINTSTRUCT paint;
-                HDC device_context = BeginPaint(window, &paint);
-                struct win32_window_dimension dimension = win32_get_window_dimension(window);
-                win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
-                EndPaint(window, &paint);
-            } break;
-            
-            case WM_SIZE:
-            {
-            } break;
-            
-            case WM_DESTROY:
-            {
-                global_running = false;
-            } break;
-            
-            case WM_CLOSE:
-            {
-                global_running = false;
-            } break;
-            
-            case WM_ACTIVATEAPP:
-            {
-                OutputDebugString("WM_ACTIVATEAPP");
-            } break;
-            
-            default:
-            {
-                result = DefWindowProc(window, message, w_param, l_param);
-            }
-            break;
+            Assert("Keyboard input came in through a non-dispatch message.");
+        }break;
+        
+        case WM_PAINT:
+        {
+            PAINTSTRUCT paint;
+            HDC device_context = BeginPaint(window, &paint);
+            struct win32_window_dimension dimension = win32_get_window_dimension(window);
+            win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
+            EndPaint(window, &paint);
+        } break;
+        
+        case WM_SIZE:
+        {
+        } break;
+        
+        case WM_DESTROY:
+        {
+            global_running = false;
+        } break;
+        
+        case WM_CLOSE:
+        {
+            global_running = false;
+        } break;
+        
+        case WM_ACTIVATEAPP:
+        {
+            OutputDebugString("WM_ACTIVATEAPP");
+        } break;
+        
+        default:
+        {
+            result = DefWindowProc(window, message, w_param, l_param);
         }
+        break;
     }
     
     return result;
@@ -451,5 +436,58 @@ win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_l
         }
         
         sound_output->secondary_buffer->lpVtbl->Unlock(sound_output->secondary_buffer, region1, region1_size, region2, region2_size);
+    }
+}
+
+internal void
+win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down)
+{
+    new_state->ended_down = is_down;
+    ++new_state->half_transition_count;
+}
+
+internal void
+win32_process_pending_messages(struct emulator_keyboard_input *input)
+{
+    MSG message;
+    while(PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
+    {
+        switch (message.message)
+        {
+            case WM_QUIT:
+            {
+                global_running = false;
+            } break;
+            
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN:
+            case WM_KEYUP:
+            {
+                b32 is_down = ((message.lParam & (1 << 31)) == 0);
+                b32 was_down = ((message.lParam & (1 << 30)) != 0);
+                u32 vk_code = message.wParam;
+                
+                if (is_down != was_down)
+                {
+                    b32 alt_key_was_down = ((message.lParam & (1 << 29)) != 0);
+                    
+                    if ((vk_code == VK_F4) && alt_key_was_down)
+                    {
+                        global_running = false;
+                    }
+                    else if (vk_code == '1')
+                    {
+                        win32_process_keyboard_message(&input->numeric_1, is_down);
+                    }
+                } break;
+                
+                default:
+                {
+                    TranslateMessage(&message);
+                    DispatchMessage(&message);
+                } break;
+            }
+        }
     }
 }

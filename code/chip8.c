@@ -20,7 +20,7 @@ emulator_output_sound(struct emulator_sound_output_buffer *sound_buffer)
 }
 
 void
-emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer)
+emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input)
 {
     int x_offset = 0;
     int y_offset = 0;
