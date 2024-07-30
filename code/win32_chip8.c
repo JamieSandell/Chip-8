@@ -65,10 +65,15 @@ WinMain (HINSTANCE instance,
             
             //win32_init_x_audio();
             
+            struct emulator_keyboard_input inputs[2];
+            struct emulator_keyboard_input *old_input = &inputs[0];
+            struct emulator_keyboard_input *new_input = &inputs[1];
+            struct emulator_keyboard_input *temp_input = NULL;
+            
             while (global_running)
             {
-                struct emulator_keyboard_input input = {0};
-                win32_process_pending_messages(&input);
+                
+                win32_process_pending_messages(new_input);
                 
                 // NOTE: DirectSound test
                 DWORD byte_to_lock;
@@ -113,7 +118,11 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.height = global_back_buffer.height;
                 bitmap_buffer.pitch = global_back_buffer.pitch;
                 
-                emulator_update_and_render(&bitmap_buffer, &sound_buffer, &input);
+                emulator_update_and_render(&bitmap_buffer, &sound_buffer, new_input);
+                
+                struct emulator_keyboard_input *temp_input = new_input;
+                new_input = old_input;
+                old_input = temp_input;
                 
                 if (is_sound_valid)
                 {
