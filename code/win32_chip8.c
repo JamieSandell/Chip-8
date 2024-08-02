@@ -65,13 +65,13 @@ WinMain (HINSTANCE instance,
             
             //win32_init_x_audio();
             
-            struct emulator_keyboard_input inputs[2];
-            struct emulator_keyboard_input *old_input = &inputs[0];
-            struct emulator_keyboard_input *new_input = &inputs[1];
-            struct emulator_keyboard_input *temp_input = NULL;
+            struct emulator_keyboard_input inputs[2] = {0};
             
             while (global_running)
             {
+                struct emulator_keyboard_input *old_input = &inputs[0];
+                struct emulator_keyboard_input *new_input = &inputs[1];
+                struct emulator_keyboard_input *temp_input = NULL;
                 
                 win32_process_pending_messages(new_input);
                 

@@ -22,7 +22,13 @@ emulator_output_sound(struct emulator_sound_output_buffer *sound_buffer)
 void
 emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input)
 {
-    int x_offset = 0;
+    local_persist int x_offset = 0;
+    
+    if (input->numeric_1.ended_down)
+    {
+        x_offset += 1;
+    }
+    
     int y_offset = 0;
     emulator_output_sound(sound_buffer);
     render_weird_gradient(buffer, x_offset, y_offset);
