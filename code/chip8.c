@@ -24,6 +24,13 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emul
 {
     local_persist int x_offset = 0;
     
+    struct read_file_result file_data = platform_read_entire_file(__FILE__);
+    
+    if (file_data.contents)
+    {
+        platform_free_file_memory(file_data.contents);
+    }
+    
     if (input->numeric_1.ended_down)
     {
         x_offset += 1;

@@ -6,6 +6,7 @@
 #include <windows.h>
 #include "win32_chip8.h"
 
+#include "constants.c"
 #include "chip8.c"
 
 global_variable b32 global_running;
@@ -158,6 +159,79 @@ WinMain (HINSTANCE instance,
     }
     
     return -1;
+}
+
+internal void
+platform_free_file_memory(void *memory)
+{
+    if (memory)
+    {
+        VirtualFree(memory, 0, MEM_RELEASE);
+    }
+}
+
+internal struct read_file_result
+platform_read_entire_file(const char *filename)
+{
+    struct read_file_result result = {0};
+    
+    HANDLE file_handle = CreateFileA(filename,
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     NULL,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     0);
+    
+    if (file_handle != INVALID_HANDLE_VALUE)
+    {
+        LARGE_INTEGER file_size;
+        
+        if (GetFileSizeEx(file_handle, &file_size))
+        {
+            result.contents = VirtualAlloc(0,
+                                           file_size.QuadPart,
+                                           MEM_RESERVE | MEM_COMMIT,
+                                           PAGE_READWRITE);
+            
+            if (result.contents)
+            {
+                DWORD bytes_read;
+                
+                if (ReadFile(file_handle,
+                             result.contents,
+                             file_size.QuadPart,
+                             &bytes_read,
+                             NULL)
+                    && (safe_truncate_uint64(file_size.QuadPart) == bytes_read))
+                {
+                    result.contents_size = bytes_read;
+                }
+                else
+                {
+                    platform_free_file_memory(result.contents);
+                    result.contents = NULL;
+                    // TODO: Logging, failed to read file.
+                }
+            }
+            else
+            {
+                // TODO: Logging, memory allocation failed.
+            }
+        }
+        else
+        {
+            // TODO: Logging, file size evaluation failed.
+        }
+        
+        CloseHandle(file_handle);
+    }
+    else
+    {
+        // TODO: Logging, handle creation failed.
+    }
+    
+    return result;
 }
 
 internal void

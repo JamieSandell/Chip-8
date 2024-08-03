@@ -9,6 +9,28 @@
 #define Assert(Expression)
 #endif
 
+inline u32
+safe_truncate_uint64(u64 value)
+{
+    Assert(value < 0xFFFFFFFF); // nothing in the upper 32 bits?
+    return (u32)value;
+}
+
+// TODO: Services that the platform layer provides to the emulator.
+struct read_file_result
+{
+    u32 contents_size;
+    void *contents;
+};
+
+internal void
+platform_free_file_memory(void *memory);
+
+internal struct read_file_result
+platform_read_entire_file(const char *filename);
+
+// NOTE: Services that the emulator provides to the platform layer.
+
 struct emulator_button_state
 {
     s32 half_transition_count;
@@ -57,13 +79,10 @@ struct emulator_sound_output_buffer
     s16 *samples;
 };
 
-// TODO: Services that the platform layer provides to the emulator.
-
-// NOTE: Services that the emulator provides to the platform layer.
-void
+internal void
 emulator_output_sound(struct emulator_sound_output_buffer *buffer);
 
-void
+internal void
 emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input);
 
 internal void
