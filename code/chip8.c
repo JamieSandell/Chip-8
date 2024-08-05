@@ -1,4 +1,31 @@
+#include <string.h>
 #include "chip8.h"
+
+internal void
+emulator_init(struct emulator *emulator)
+{
+    if (emulator->memory)
+    {
+        platform_free_file_memory(emulator->memory);
+    }
+    
+    struct read_file_result result = platform_read_entire_file("..\\data\\IBM Logo.ch8"); // TODO: Don't hardcode
+    
+    if (!result.contents)
+    {
+        // TODO: Logging, error file contents is NULL
+        return;
+    }
+    
+    memcpy(emulator->memory + c_ram_offset, result.contents, (size_t)result.contents_size);
+    
+    for (size_t i = 0; i < C_FONT_SET_SIZE; ++i)
+    {
+        emulator->memory[c_font_offset + i] = c_font_set[i];
+    }
+    
+    emulator->pc = c_ram_offset;
+}
 
 void
 emulator_output_sound(struct emulator_sound_output_buffer *sound_buffer)

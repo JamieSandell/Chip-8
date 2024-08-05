@@ -31,6 +31,26 @@ platform_read_entire_file(const char *filename);
 
 // NOTE: Services that the emulator provides to the platform layer.
 
+struct emulator
+{
+    uint8_t memory[C_MEMORY_SIZE];
+    int8_t delay_timer;
+    int8_t sound_timer;
+    int8_t general_purpose_registers[C_GENERAL_REGISTERS_SIZE];
+    uint8_t x;
+    uint8_t y;
+    uint8_t n;
+    uint16_t i;
+    uint16_t pc;
+    uint16_t instruction;
+    uint16_t nnn;
+    char display[C_DISPLAY_WIDTH * C_DISPLAY_HEIGHT];
+    uint8_t nn;
+    uint8_t first_byte;
+    uint8_t second_byte;
+    uint8_t opcode;
+};
+
 struct emulator_button_state
 {
     s32 half_transition_count;
@@ -78,6 +98,9 @@ struct emulator_sound_output_buffer
     int sample_count;
     s16 *samples;
 };
+
+internal void
+emulator_init(struct emulator *emulator);
 
 internal void
 emulator_output_sound(struct emulator_sound_output_buffer *buffer);
