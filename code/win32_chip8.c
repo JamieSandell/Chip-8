@@ -7,6 +7,7 @@
 #include "win32_chip8.h"
 
 #include "constants.c"
+#include "globals.c"
 #include "chip8.c"
 
 global_variable b32 global_running;
@@ -68,6 +69,9 @@ WinMain (HINSTANCE instance,
             
             struct emulator_keyboard_input inputs[2] = {0};
             
+            struct emulator emulator;
+            emulator_init(&emulator);
+            
             while (global_running)
             {
                 struct emulator_keyboard_input *old_input = &inputs[0];
@@ -119,7 +123,7 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.height = global_back_buffer.height;
                 bitmap_buffer.pitch = global_back_buffer.pitch;
                 
-                emulator_update_and_render(&bitmap_buffer, &sound_buffer, new_input);
+                emulator_update_and_render(&bitmap_buffer, &sound_buffer, new_input, &emulator);
                 
                 temp_input = new_input;
                 new_input = old_input;

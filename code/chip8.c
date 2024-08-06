@@ -47,16 +47,77 @@ emulator_output_sound(struct emulator_sound_output_buffer *sound_buffer)
 }
 
 void
-emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input)
+emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
+                           struct emulator_sound_output_buffer *sound_buffer,
+                           struct emulator_keyboard_input *input,
+                           struct emulator *emulator)
 {
-    local_persist int x_offset = 0;
+    emulator->first_byte = emulator->memory[emulator->pc];
+    emulator->second_byte = emulator->memory[emulator->pc + 1];
+    emulator->instruction = (emulator->first_byte << 8) | emulator->second_byte;
+    emulator->x = emulator->first_byte & 0x0F; // second nibble
+    emulator->y = (emulator->second_byte >> 4) & 0x0F; // 3rd nibble
+    emulator->n = emulator->second_byte & 0x0F; // 4th nibble
+    emulator->nn = emulator->second_byte;
+    emulator->nnn = (uint16_t)emulator->x << 8; // second nibble
+    emulator->nnn |= (uint16_t)emulator->y << 4; // third nibble
+    emulator->nnn |= (uint16_t)emulator->n; // 4th nibble
+    emulator->opcode = (emulator->first_byte >> 4) & 0x0F;
+    emulator->pc += 2;
     
-    struct read_file_result file_data = platform_read_entire_file(__FILE__);
-    
-    if (file_data.contents)
+    switch (emulator->opcode)
     {
-        platform_free_file_memory(file_data.contents);
+        case 0:
+        {
+            switch (emulator->nnn)
+            {
+                case 0x0E0:
+                {
+                    OutputDebugStringA("disp_clear()\n");
+                } break;
+                case 0x0EE:
+                {
+                    OutputDebugStringA("return\n");
+                } break;
+                default:
+                {
+                    snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the 0 instruction.\n");
+                    OutputDebugStringA(g_message);
+                } break;
+            } break;
+        }
+        case 1:
+        {
+            OutputDebugStringA("goto NNN\n");
+            emulator->pc = emulator->nnn;
+        } break;
+        case 6:
+        {
+            OutputDebugStringA("Vx = NN\n");
+            emulator->general_purpose_registers[emulator->n] = emulator->nn;
+        } break;
+        case 7:
+        {
+            OutputDebugStringA("Vx += NN\n");
+            emulator->general_purpose_registers[emulator->n] += emulator->nn;
+        } break;
+        case 0xA:
+        {
+            OutputDebugStringA("I = NNN\n");
+            emulator->i = emulator->nnn;
+        } break;
+        case 0xD:
+        {
+            OutputDebugStringA("draw(Vx, Vy, N)\n");
+        } break;
+        default:
+        {
+            snprintf(g_message, C_MAX_MESSAGE_SIZE, "Opcode (first nibble) %1X at memory address %d not implemented.\n", emulator->pc, emulator->opcode);
+            OutputDebugStringA(g_message);
+        } break;
     }
+    
+    local_persist int x_offset = 0;
     
     if (input->numeric_1.ended_down)
     {

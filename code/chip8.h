@@ -106,7 +106,7 @@ internal void
 emulator_output_sound(struct emulator_sound_output_buffer *buffer);
 
 internal void
-emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input);
+emulator_update_and_render(struct emulator_offscreen_buffer *buffer, struct emulator_sound_output_buffer *sound_buffer, struct emulator_keyboard_input *input, struct emulator *emulator);
 
 internal void
 render_weird_gradient(struct emulator_offscreen_buffer *buffer, int x_offset, int y_offset);
