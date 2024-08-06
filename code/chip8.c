@@ -14,7 +14,7 @@ emulator_init(struct emulator *emulator)
     if (!result.contents)
     {
         // TODO: Logging, error file contents is NULL
-        return;
+        return; // TODO: return failure?
     }
     
     memcpy(emulator->memory + c_ram_offset, result.contents, (size_t)result.contents_size);
@@ -52,6 +52,25 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
 {
+    
+    local_persist int x_offset = 0;
+    
+    if (input->numeric_1.ended_down)
+    {
+        x_offset += 1;
+    }
+    
+    int y_offset = 0;
+    emulator_output_sound(sound_buffer);
+    
+    local_persist int first_run = 1;
+    
+    if(first_run)
+    {
+        first_run = 0;
+        render_weird_gradient(buffer, x_offset, y_offset);
+    }
+    
     emulator->first_byte = emulator->memory[emulator->pc];
     emulator->second_byte = emulator->memory[emulator->pc + 1];
     emulator->instruction = (emulator->first_byte << 8) | emulator->second_byte;
@@ -73,6 +92,26 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             {
                 case 0x0E0:
                 {
+                    memset(emulator->display, 0, sizeof(emulator->display) / sizeof(emulator->display[0]));
+                    
+                    u8 *row = (u8 *)buffer->memory;
+                    
+                    for (int y = 0; y < C_DISPLAY_HEIGHT; ++y)
+                    {
+                        u32 *pixel = (u32 *)row;
+                        
+                        for (int x = 0; x < C_DISPLAY_WIDTH; ++x)
+                        {
+                            u8 red = 0;
+                            u8 green = 0;
+                            u8 blue = 0;
+                            
+                            *pixel++ = red << 16 | green << 8 | blue; // << 0
+                        }
+                        
+                        row += buffer->pitch;
+                    }
+                    
                     OutputDebugStringA("disp_clear()\n");
                 } break;
                 case 0x0EE:
@@ -116,17 +155,6 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             OutputDebugStringA(g_message);
         } break;
     }
-    
-    local_persist int x_offset = 0;
-    
-    if (input->numeric_1.ended_down)
-    {
-        x_offset += 1;
-    }
-    
-    int y_offset = 0;
-    emulator_output_sound(sound_buffer);
-    render_weird_gradient(buffer, x_offset, y_offset);
 }
 
 internal void
