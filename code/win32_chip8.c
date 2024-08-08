@@ -131,6 +131,7 @@ WinMain (HINSTANCE instance,
                 
                 if (is_sound_valid)
                 {
+                    
                     win32_fill_sound_buffer(&sound_output, byte_to_lock, bytes_to_write, &sound_buffer);
                 }
                 

@@ -69,6 +69,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     {
         first_run = 0;
         render_weird_gradient(buffer, x_offset, y_offset);
+        struct read_file_result result = platform_read_entire_file("W:\\data\\IBM Logo.ch8");
+        
+        if (result.contents)
+        {
+            memcpy(emulator->memory, result.contents, result.contents_size);
+        }
     }
     
     emulator->first_byte = emulator->memory[emulator->pc];
@@ -94,22 +100,24 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     memset(emulator->display, 0, sizeof(emulator->display) / sizeof(emulator->display[0]));
                     
-                    u8 *row = (u8 *)buffer->memory;
+                    u8 *destination_row = (u8 *)buffer->memory;
+                    u8 *source_row = (u8 *)emulator->display;
                     
                     for (int y = 0; y < C_DISPLAY_HEIGHT; ++y)
                     {
-                        u32 *pixel = (u32 *)row;
+                        u8 *destination_pixel = destination_row;
+                        u8 *source_pixel = source_row;
                         
-                        for (int x = 0; x < C_DISPLAY_WIDTH; ++x)
+                        for (int x = 0; x < C_DISPLAY_WIDTH; ++x, *source_pixel++)
                         {
-                            u8 red = 0;
-                            u8 green = 0;
-                            u8 blue = 0;
-                            
-                            *pixel++ = red << 16 | green << 8 | blue; // << 0
+                            for (int pixel = 0; pixel < 4; ++pixel)
+                            {
+                                *destination_pixel++ = *source_pixel;
+                            }
                         }
                         
-                        row += buffer->pitch;
+                        destination_row += buffer->pitch;
+                        source_row += C_DISPLAY_WIDTH;
                     }
                     
                     OutputDebugStringA("disp_clear()\n");
