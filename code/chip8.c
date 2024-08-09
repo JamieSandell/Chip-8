@@ -101,7 +101,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     memset(emulator->display, 0, sizeof(emulator->display) / sizeof(emulator->display[0]));
                     
                     u8 *destination_row = (u8 *)buffer->memory;
-                    u8 *source_row = (u8 *)emulator->display;
+                    u8 *source_row = emulator->display;
                     
                     for (int y = 0; y < C_DISPLAY_HEIGHT; ++y)
                     {
@@ -156,6 +156,17 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         case 0xD:
         {
             OutputDebugStringA("draw(Vx, Vy, N)\n");
+            int x = emulator->general_purpose_registers[emulator->x] % C_DISPLAY_WIDTH;
+            int y = emulator->general_purpose_registers[emulator->y] % C_DISPLAY_HEIGHT;
+            emulator->general_purpose_registers[0X0F] = 0;
+            
+            for (int row = 0; row < emulator->N; ++row)
+            {
+                for (int pixel = 0; pixel < 8; ++pixel)
+                {
+                    if (emulator->memory[i + row]){}
+                }
+            }
         } break;
         default:
         {
