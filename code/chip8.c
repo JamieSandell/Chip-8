@@ -68,7 +68,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     if(first_run)
     {
         first_run = 0;
-        render_weird_gradient(buffer, x_offset, y_offset);
+        //render_weird_gradient(buffer, x_offset, y_offset);
         struct read_file_result result = platform_read_entire_file("W:\\data\\IBM Logo.ch8");
         
         if (result.contents)
@@ -156,16 +156,55 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         case 0xD:
         {
             OutputDebugStringA("draw(Vx, Vy, N)\n");
-            int x = emulator->general_purpose_registers[emulator->x] % C_DISPLAY_WIDTH;
-            int y = emulator->general_purpose_registers[emulator->y] % C_DISPLAY_HEIGHT;
+            u8 x = emulator->general_purpose_registers[emulator->x] % C_DISPLAY_WIDTH;
+            u8 y = emulator->general_purpose_registers[emulator->y] % C_DISPLAY_HEIGHT;
+            u8 *display_pixel = emulator->display;
+            display_pixel += y * C_DISPLAY_WIDTH;
+            display_pixel += x;
             emulator->general_purpose_registers[0X0F] = 0;
+            u8 *sprite_row = &emulator->memory[emulator->i];
             
-            for (int row = 0; row < emulator->N; ++row)
+            for (int y = 0; y < emulator->n; ++y)
             {
-                for (int pixel = 0; pixel < 8; ++pixel)
+                u8 *sprite_pixel = sprite_row;
+                
+                for (int x = 0; x < 8; ++x)
                 {
-                    if (emulator->memory[i + row]){}
+                    if(*sprite_pixel && *display_pixel)
+                    {
+                        *display_pixel = 0;
+                        emulator->general_purpose_registers[0X0F] = 1;
+                    }
+                    else if(!(*sprite_pixel) && !(*display_pixel))
+                    {
+                        *display_pixel = 255;
+                    }
+                    
+                    ++display_pixel;
+                    ++sprite_pixel;
                 }
+                
+                sprite_row += 8;
+            }
+            
+            u8 *destination_row = (u8 *)buffer->memory; //TODO: Refactor to method
+            u8 *source_row = emulator->display;
+            
+            for (int y = 0; y < C_DISPLAY_HEIGHT; ++y)
+            {
+                u8 *destination_pixel = destination_row;
+                u8 *source_pixel = source_row;
+                
+                for (int x = 0; x < C_DISPLAY_WIDTH; ++x, *source_pixel++)
+                {
+                    for (int pixel = 0; pixel < 4; ++pixel)
+                    {
+                        *destination_pixel++ = *source_pixel;
+                    }
+                }
+                
+                destination_row += buffer->pitch;
+                source_row += C_DISPLAY_WIDTH;
             }
         } break;
         default:

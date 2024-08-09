@@ -49,7 +49,7 @@ WinMain (HINSTANCE instance,
         if (window)
         {
             HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
-            win32_resize_dib_section(&global_back_buffer, 1280, 720);
+            win32_resize_dib_section(&global_back_buffer, C_DISPLAY_WIDTH, C_DISPLAY_HEIGHT);
             global_running = true;
             LARGE_INTEGER last_counter;
             QueryPerformanceCounter(&last_counter);
