@@ -141,12 +141,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         case 6:
         {
             OutputDebugStringA("Vx = NN\n");
-            emulator->general_purpose_registers[emulator->n] = emulator->nn;
+            emulator->general_purpose_registers[emulator->x] = emulator->nn;
         } break;
         case 7:
         {
             OutputDebugStringA("Vx += NN\n");
-            emulator->general_purpose_registers[emulator->n] += emulator->nn;
+            emulator->general_purpose_registers[emulator->x] += emulator->nn;
         } break;
         case 0xA:
         {
@@ -161,30 +161,42 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             u8 *display_pixel = emulator->display;
             display_pixel += y * C_DISPLAY_WIDTH;
             display_pixel += x;
-            emulator->general_purpose_registers[0X0F] = 0;
+            emulator->general_purpose_registers[0xF] = 0;
             u8 *sprite_row = &emulator->memory[emulator->i];
             
-            for (int y = 0; y < emulator->n; ++y)
+            for (int row = 0; row < emulator->n; ++row)
             {
-                u8 *sprite_pixel = sprite_row;
+                u8 sprite_byte = *sprite_row;
                 
-                for (int x = 0; x < 8; ++x)
+                for (int column = 0; column < 8; ++column)
                 {
-                    if(*sprite_pixel && *display_pixel)
+                    u8 sprite_pixel = sprite_byte & (0x80 >> column);
+                    
+                    if(sprite_pixel && *display_pixel)
                     {
                         *display_pixel = 0;
-                        emulator->general_purpose_registers[0X0F] = 1;
+                        emulator->general_purpose_registers[0xF] = 1;
                     }
-                    else if(!(*sprite_pixel) && !(*display_pixel))
+                    else if(sprite_pixel && !(*display_pixel))
                     {
-                        *display_pixel = 255;
+                        *display_pixel = 0xFF;
                     }
                     
+                    /*if ((x + column) % C_DISPLAY_WIDTH == 0)
+                    {
+                        break;
+                    }*/
+                    
                     ++display_pixel;
-                    ++sprite_pixel;
                 }
                 
                 sprite_row += 8;
+                display_pixel += 8;
+                
+                /*if ((y + row) % C_DISPLAY_HEIGHT == 0)
+                {
+                    break;
+                }*/
             }
             
             u8 *destination_row = (u8 *)buffer->memory; //TODO: Refactor to method
