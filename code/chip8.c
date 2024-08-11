@@ -159,18 +159,19 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             u8 x = emulator->general_purpose_registers[emulator->x] % C_DISPLAY_WIDTH;
             u8 y = emulator->general_purpose_registers[emulator->y] % C_DISPLAY_HEIGHT;
             u8 *display_pixel = emulator->display;
-            display_pixel += y * C_DISPLAY_WIDTH;
-            display_pixel += x;
             emulator->general_purpose_registers[0xF] = 0;
             u8 *sprite_row = &emulator->memory[emulator->i];
+            
             
             for (int row = 0; row < emulator->n; ++row)
             {
                 u8 sprite_byte = *sprite_row;
+                u8 *display_row = emulator->display + ((y + row) * C_DISPLAY_WIDTH);
                 
                 for (int column = 0; column < 8; ++column)
                 {
                     u8 sprite_pixel = sprite_byte & (0x80 >> column);
+                    u8 *display_pixel = display_row + x + column;
                     
                     if(sprite_pixel && *display_pixel)
                     {
@@ -190,8 +191,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     ++display_pixel;
                 }
                 
-                sprite_row += 8;
-                display_pixel += 8;
+                ++sprite_row;
                 
                 /*if ((y + row) % C_DISPLAY_HEIGHT == 0)
                 {
