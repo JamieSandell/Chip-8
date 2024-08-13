@@ -181,6 +181,11 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     OutputDebugStringA("Vx = Vy\n");
                     emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
                 } break;
+                case 1:
+                {
+                    OutputDebugStringA("Vx |= Vy");
+                    emulator->general_purpose_registers[emulator->x] |= emulator->general_purpose_registers[emulator->y];
+                } break;
                 default:
                 {
                     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the 8 instruction.\n");
