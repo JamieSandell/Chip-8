@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <string.h>
+#include <time.h>
 #include "chip8.h"
 
 internal void
@@ -26,6 +27,7 @@ emulator_init(struct emulator *emulator)
     }
     
     emulator->pc = c_ram_offset;
+    srand(time(0));
 }
 
 void
@@ -184,22 +186,22 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 case 1:
                 {
-                    OutputDebugStringA("Vx |= Vy");
+                    OutputDebugStringA("Vx |= Vy\n");
                     emulator->general_purpose_registers[emulator->x] |= emulator->general_purpose_registers[emulator->y];
                 } break;
                 case 2:
                 {
-                    OutputDebugStringA("Vx &= Vy");
+                    OutputDebugStringA("Vx &= Vy\n");
                     emulator->general_purpose_registers[emulator->x] &= emulator->general_purpose_registers[emulator->y];
                 } break;
                 case 3:
                 {
-                    OutputDebugStringA("Vx ^= Vy");
+                    OutputDebugStringA("Vx ^= Vy\n");
                     emulator->general_purpose_registers[emulator->x] ^= emulator->general_purpose_registers[emulator->y];
                 } break;
                 case 4:
                 {
-                    OutputDebugStringA("Vx += Vy");
+                    OutputDebugStringA("Vx += Vy\n");
                     uint16_t vx_vy = (uint16_t)emulator->general_purpose_registers[emulator->x] + (uint16_t)emulator->general_purpose_registers[emulator->y];
                     emulator->general_purpose_registers[emulator->x] += emulator->general_purpose_registers[emulator->y];
                     emulator->general_purpose_registers[0xF] = vx_vy> UCHAR_MAX ? 1 : 0;
@@ -207,7 +209,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 case 5:
                 {
-                    OutputDebugStringA("Vx -= Vy");
+                    OutputDebugStringA("Vx -= Vy\n");
                     uint8_t *x = &emulator->general_purpose_registers[emulator->x];
                     uint8_t *y = &emulator->general_purpose_registers[emulator->y];
                     
@@ -216,14 +218,14 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 case 6:
                 {
-                    OutputDebugStringA("Vx >>= 1");
+                    OutputDebugStringA("Vx >>= 1\n");
                     uint8_t *x = &emulator->general_purpose_registers[emulator->x];
                     emulator->general_purpose_registers[0xF] = *x & 0x1;
                     *x >>= 1;
                 } break;
                 case 7:
                 {
-                    OutputDebugStringA("Vx = Vy - Vx");
+                    OutputDebugStringA("Vx = Vy - Vx\n");
                     uint8_t *x = &emulator->general_purpose_registers[emulator->x];
                     uint8_t *y = &emulator->general_purpose_registers[emulator->y];
                     
@@ -232,7 +234,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 case 0xE:
                 {
-                    OutputDebugStringA("Vx <<= 1");
+                    OutputDebugStringA("Vx <<= 1\n");
                     uint8_t *x = &emulator->general_purpose_registers[emulator->x];
                     emulator->general_purpose_registers[0xF] = *x & 0x80;
                 } break;
@@ -256,6 +258,16 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             OutputDebugStringA("I = NNN\n");
             emulator->i = emulator->nnn;
+        } break;
+        case 0xB:
+        {
+            OutputDebugStringA("PC = V0 + NNN\n");
+            emulator->pc = emulator->general_purpose_registers[0] + emulator->nnn;
+        } break;
+        case 0xC:
+        {
+            OutputDebugStringA("Vx = rand() & NN\n");
+            emulator->general_purpose_registers[emulator->x] = rand() % 255 & emulator->nn;
         } break;
         case 0xD:
         {
