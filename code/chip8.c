@@ -167,6 +167,11 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 emulator->pc += 2;
             }
         } break;
+        case 6: 
+        {
+            OutputDebugStringA("Vx = NN");
+            emulator->general_purpose_registers[emulator->x] = emulator->nn;
+        } break;
         case 7:
         {
             OutputDebugStringA("Vx += NN\n");
