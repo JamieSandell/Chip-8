@@ -205,6 +205,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     emulator->general_purpose_registers[0xF] = vx_vy> UCHAR_MAX ? 1 : 0;
                     
                 } break;
+                case 5:
+                {
+                    OutputDebugStringA("Vx -= Vy");
+                    uint8_t *x = &emulator->general_purpose_registers[emulator->x];
+                    uint8_t *y = &emulator->general_purpose_registers[emulator->y];
+                    
+                    emulator->general_purpose_registers[0xF] = *x > *y ? 1 : 0;
+                    *x -= *y;
+                } break;
                 default:
                 {
                     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the 8 instruction.\n");
