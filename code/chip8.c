@@ -159,6 +159,13 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 emulator->pc += 2;
             }
         } break;
+        case 5:
+        {
+            if (emulator->general_purpose_registers[emulator->x] == emulator->general_purpose_registers[emulator->y])
+            {
+                OutputDebugStringA("if (Vx == Vy)");
+            }
+        } break;
         case 7:
         {
             OutputDebugStringA("Vx += NN\n");
