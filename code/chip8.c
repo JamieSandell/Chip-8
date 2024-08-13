@@ -164,12 +164,22 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             if (emulator->general_purpose_registers[emulator->x] == emulator->general_purpose_registers[emulator->y])
             {
                 OutputDebugStringA("if (Vx == Vy)");
+                emulator->pc += 2;
             }
         } break;
         case 7:
         {
             OutputDebugStringA("Vx += NN\n");
             emulator->general_purpose_registers[emulator->x] += emulator->nn;
+        } break;
+        case 9:
+        {
+            OutputDebugStringA("if (Vx != Vy)");
+            if (emulator->general_purpose_registers[emulator->x] != emulator->general_purpose_registers[emulator->y])
+            {
+                OutputDebugStringA("if (Vx != Vy)");
+                emulator->pc += 2;
+            }
         } break;
         case 0xA:
         {
