@@ -138,16 +138,11 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             OutputDebugStringA("goto NNN\n");
             emulator->pc = emulator->nnn;
         } break;
-        case 6:
-        {
-            OutputDebugStringA("Vx = NN\n");
-            emulator->general_purpose_registers[emulator->x] = emulator->nn;
-        } break;
         case 3:
         {
             if (emulator->general_purpose_registers[emulator->x] == emulator->nn)
             {
-                OutputDebugStringA("if (Vx == NN)");
+                OutputDebugStringA("if (Vx == NN)\n");
                 emulator->pc += 2;
             }
         } break;
@@ -155,7 +150,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             if (emulator->general_purpose_registers[emulator->x] != emulator->nn)
             {
-                OutputDebugStringA("if (Vx != NN)");
+                OutputDebugStringA("if (Vx != NN)\n");
                 emulator->pc += 2;
             }
         } break;
@@ -163,13 +158,13 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             if (emulator->general_purpose_registers[emulator->x] == emulator->general_purpose_registers[emulator->y])
             {
-                OutputDebugStringA("if (Vx == Vy)");
+                OutputDebugStringA("if (Vx == Vy)\n");
                 emulator->pc += 2;
             }
         } break;
         case 6: 
         {
-            OutputDebugStringA("Vx = NN");
+            OutputDebugStringA("Vx = NN\n");
             emulator->general_purpose_registers[emulator->x] = emulator->nn;
         } break;
         case 7:
@@ -177,12 +172,28 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             OutputDebugStringA("Vx += NN\n");
             emulator->general_purpose_registers[emulator->x] += emulator->nn;
         } break;
+        case 8:
+        {
+            switch (emulator->n)
+            {
+                case 0:
+                {
+                    OutputDebugStringA("Vx = Vy\n");
+                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
+                } break;
+                default:
+                {
+                    snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the 8 instruction.\n");
+                    OutputDebugStringA(g_message);
+                } break;
+            }
+        } break;
         case 9:
         {
-            OutputDebugStringA("if (Vx != Vy)");
+            OutputDebugStringA("if (Vx != Vy)\n");
             if (emulator->general_purpose_registers[emulator->x] != emulator->general_purpose_registers[emulator->y])
             {
-                OutputDebugStringA("if (Vx != Vy)");
+                OutputDebugStringA("if (Vx != Vy)\n");
                 emulator->pc += 2;
             }
         } break;
