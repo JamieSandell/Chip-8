@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <string.h>
 #include "chip8.h"
 
@@ -194,7 +195,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 3:
                 {
                     OutputDebugStringA("Vx ^= Vy");
-                    emulator->general_purpose_registers[emulator->x] ^= emulator->general->purpose_registers[emulator->y];
+                    emulator->general_purpose_registers[emulator->x] ^= emulator->general_purpose_registers[emulator->y];
+                } break;
+                case 4:
+                {
+                    OutputDebugStringA("Vx += Vy");
+                    uint16_t vx_vy = (uint16_t)emulator->general_purpose_registers[emulator->x] + (uint16_t)emulator->general_purpose_registers[emulator->y];
+                    emulator->general_purpose_registers[emulator->x] += emulator->general_purpose_registers[emulator->y];
+                    emulator->general_purpose_registers[0xF] = vx_vy> UCHAR_MAX ? 1 : 0;
+                    
                 } break;
                 default:
                 {
@@ -225,7 +234,6 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             u8 *display_pixel = emulator->display;
             emulator->general_purpose_registers[0xF] = 0;
             u8 *sprite_row = &emulator->memory[emulator->i];
-            
             
             for (int row = 0; row < emulator->n; ++row)
             {
