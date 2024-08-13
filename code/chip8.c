@@ -334,6 +334,23 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 source_row += C_DISPLAY_WIDTH;
             }
         } break;
+        // TODO: FX1E
+        case 0xF:
+        {
+            switch (emulator->nn)
+            {
+                case 0X29:
+                {
+                    OutputDebugStringA("I = sprite_addr[Vx]\n");
+                    emulator->i = emulator->memory[c_font_offset] + (emulator->general_purpose_registers[emulator->x] * 5);
+                } break;
+                default:
+                {
+                    snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
+                    OutputDebugStringA(g_message);
+                } break;
+            }
+        } break;
         default:
         {
             snprintf(g_message, C_MAX_MESSAGE_SIZE, "Opcode (first nibble) %1X at memory address %d not implemented.\n", emulator->pc, emulator->opcode);
