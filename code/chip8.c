@@ -151,6 +151,14 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 emulator->pc += 2;
             }
         } break;
+        case 4:
+        {
+            if (emulator->general_purpose_registers[emulator->x] != emulator->nn)
+            {
+                OutputDebugStringA("if (Vx != NN)");
+                emulator->pc += 2;
+            }
+        } break;
         case 7:
         {
             OutputDebugStringA("Vx += NN\n");
