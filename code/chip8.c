@@ -360,7 +360,16 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     {
                         emulator->memory[emulator->i++] = emulator->general_purpose_registers[reg];
                     }
-                }
+                } break;
+                case 0x65:
+                {
+                    OutputDebugStringA("reg_load(Vx, &I)\n");
+                    
+                    for (int reg = 0, vx = emulator->general_purpose_registers[emulator->x]; reg < vx; ++reg)
+                    {
+                        emulator->general_purpose_registers[reg] = emulator->memory[emulator->i++];
+                    }
+                } break;
                 default:
                 {
                     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
