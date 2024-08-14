@@ -339,10 +339,18 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             switch (emulator->nn)
             {
-                case 0X29:
+                case 0x29:
                 {
                     OutputDebugStringA("I = sprite_addr[Vx]\n");
                     emulator->i = emulator->memory[c_font_offset] + (emulator->general_purpose_registers[emulator->x] * 5);
+                } break;
+                case 0x33:
+                {
+                    OutputDebugStringA("set_BCD(Vx *(I+0) = BCD(3);*(I+1) = BCD(2);*(I+2) = BCD(1);\n");
+                    uint8_t vx = emulator->general_purpose_registers[emulator->x];
+                    emulator->memory[emulator->i] = vx / 100;
+                    emulator->memory[emulator->i + 1] = (vx / 10) % 10;
+                    emulator->memory[emulator->i + 2] = (vx % 100) % 10;
                 } break;
                 default:
                 {
