@@ -128,6 +128,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 0x0EE:
                 {
                     OutputDebugStringA("return\n");
+                    emulator->pc = pop();
                 } break;
                 default:
                 {

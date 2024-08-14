@@ -8,6 +8,7 @@
 
 #include "constants.c"
 #include "globals.c"
+#include "stack.c"
 #include "chip8.c"
 
 global_variable b32 global_running;
