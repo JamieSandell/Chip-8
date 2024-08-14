@@ -352,6 +352,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     emulator->memory[emulator->i + 1] = (vx / 10) % 10;
                     emulator->memory[emulator->i + 2] = (vx % 100) % 10;
                 } break;
+                case 0x55:
+                {
+                    OutputDebugStringA("reg_dump(Vx, &I)\n");
+                    
+                    for (int reg = 0, x = emulator->general_purpose_registers[emulator->x];  reg < x; ++reg)
+                    {
+                        emulator->memory[emulator->i++] = emulator->general_purpose_registers[reg];
+                    }
+                }
                 default:
                 {
                     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
