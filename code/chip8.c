@@ -142,6 +142,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
             OutputDebugStringA("goto NNN\n");
             emulator->pc = emulator->nnn;
         } break;
+        case 2:
+        {
+            OutputDebugStringA("*(0xNNN)()\n");
+            emulator->pc = emulator->nnn;
+            push(emulator->pc);
+        } break;
         case 3:
         {
             if (emulator->general_purpose_registers[emulator->x] == emulator->nn)
