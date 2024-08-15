@@ -70,7 +70,7 @@ WinMain (HINSTANCE instance,
             
             struct emulator_keyboard_input inputs[2] = {0};
             
-            struct emulator emulator;
+            struct emulator emulator = {0};
             emulator_init(&emulator);
             
             while (global_running)

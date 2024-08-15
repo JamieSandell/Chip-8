@@ -31,7 +31,7 @@ platform_read_entire_file(const char *filename);
 
 // NOTE: Services that the emulator provides to the platform layer.
 
-struct emulator
+struct emulator // TODO: put in optimal order to minimise padding
 {
     uint8_t memory[C_MEMORY_SIZE];
     int8_t delay_timer;
@@ -49,6 +49,7 @@ struct emulator
     uint8_t first_byte;
     uint8_t second_byte;
     uint8_t opcode;
+    uint16_t instruction_count; // resets every second
 };
 
 struct emulator_button_state
