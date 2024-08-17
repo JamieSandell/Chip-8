@@ -28,6 +28,7 @@ emulator_init(struct emulator *emulator)
     
     emulator->pc = c_ram_offset;
     srand(time(0));
+    emulator->start_time_ms = platform_get_milliseconds_now();
 }
 
 void
@@ -68,7 +69,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     
     local_persist int first_run = 1;
     
-    if(first_run)
+    if (first_run)
     {
         first_run = 0;
         //render_weird_gradient(buffer, x_offset, y_offset);
@@ -78,6 +79,16 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             memcpy(emulator->memory, result.contents, result.contents_size);
         }
+    }
+    
+    if (emulator->instruction_count >= c_instructions_per_second)
+    {
+        emulator->instruction_count = 0;
+        return;
+    }
+    
+    if (emulator->start_time_ms)
+    {
     }
     
     emulator->first_byte = emulator->memory[emulator->pc];
@@ -92,6 +103,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     emulator->nnn |= (uint16_t)emulator->n; // 4th nibble
     emulator->opcode = (emulator->first_byte >> 4) & 0x0F;
     emulator->pc += 2;
+    ++emulator->instruction_count;
     
     switch (emulator->opcode)
     {

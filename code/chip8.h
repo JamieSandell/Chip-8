@@ -26,6 +26,9 @@ struct read_file_result
 internal void
 platform_free_file_memory(void *memory);
 
+internal int_least64_t
+platform_get_milliseconds_now(void);
+
 internal struct read_file_result
 platform_read_entire_file(const char *filename);
 
@@ -50,6 +53,7 @@ struct emulator // TODO: put in optimal order to minimise padding
     uint8_t second_byte;
     uint8_t opcode;
     uint16_t instruction_count; // resets every second
+    int_least64_t start_time_ms;
 };
 
 struct emulator_button_state

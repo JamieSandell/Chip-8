@@ -1,5 +1,6 @@
 #include <dsound.h>
 #include <math.h>
+#include <Profileapi.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <xaudio2.h>
@@ -13,6 +14,7 @@
 
 global_variable b32 global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
+global_variable LARGE_INTEGER global_query_performance_frequency;
 
 int CALLBACK
 WinMain (HINSTANCE instance,
@@ -20,7 +22,8 @@ WinMain (HINSTANCE instance,
          LPSTR     command_line,
          int       show_command)
 {
-    LARGE_INTEGER perf_count_frequency_result;
+    QueryPerformanceFrequency(&global_query_performance_frequency);
+    LARGE_INTEGER perf_count_frequency_result; // TODO: remove
     QueryPerformanceFrequency(&perf_count_frequency_result);
     s64 perf_count_frequency = perf_count_frequency_result.QuadPart;
     
@@ -165,6 +168,15 @@ WinMain (HINSTANCE instance,
     }
     
     return -1;
+}
+
+internal int_least64_t
+platform_get_milliseconds_now(void)
+{
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    
+    return ((int_least64_t)1000 * now.QuadPart) / global_query_performance_frequency.QuadPart;
 }
 
 internal void
