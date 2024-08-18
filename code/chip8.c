@@ -81,14 +81,19 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         }
     }
     
-    if (emulator->instruction_count >= c_instructions_per_second)
+    
+    int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - emulator->start_time_ms;
+    
+    // TODO: Remove hardcoding
+    if (elapsed_time_ms <= 1000LL && emulator->instruction_count >= c_instructions_per_second)
     {
-        emulator->instruction_count = 0;
         return;
     }
     
-    if (emulator->start_time_ms)
+    if (elapsed_time_ms > 1000LL) // TODO: Remove hardcoding
     {
+        emulator->instruction_count = 0;
+        emulator->start_time_ms = platform_get_milliseconds_now();
     }
     
     emulator->first_byte = emulator->memory[emulator->pc];

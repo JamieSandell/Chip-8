@@ -176,7 +176,7 @@ platform_get_milliseconds_now(void)
     LARGE_INTEGER now;
     QueryPerformanceCounter(&now);
     
-    return ((int_least64_t)1000 * now.QuadPart) / global_query_performance_frequency.QuadPart;
+    return (1000LL * now.QuadPart) / global_query_performance_frequency.QuadPart;
 }
 
 internal void
