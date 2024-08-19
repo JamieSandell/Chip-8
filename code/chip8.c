@@ -373,7 +373,6 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 source_row += C_DISPLAY_WIDTH;
             }
         } break;
-        // TODO: FX1E
         case 0xF:
         {
             switch (emulator->nn)
@@ -382,6 +381,30 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("Vx = get_delay()\n");
                     emulator->general_purpose_registers[emulator->x] = emulator->delay_timer;
+                } break;
+                case 0x0A: // NOTE: block until a key has been released (not just held down)
+                {
+                    OutputDebugStringA("Vx = get_key()\n");
+                    bool key_pressed = false;
+                    int key;
+                    
+                    for (key = 0; key < 16; ++key)
+                    {
+                        if (input->buttons[key].ended_down)
+                        {
+                            key_pressed = true;
+                            break;
+                        }
+                    }
+                    
+                    if (key_pressed)
+                    {
+                        emulator->general_purpose_registers[emulator->x] = key;
+                    }
+                    else
+                    {
+                        emulator->pc -= 2;
+                    }
                 } break;
                 case 0x15:
                 {
