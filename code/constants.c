@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "constants.h"
 
-const int32_t c_instructions_per_second = 700;
+const int32_t c_instructions_per_second = 660;
 /*
 Fonts are made up of 5 bytes.
 The first 4 bits (so half a byte) of each byte represents the pixels that should be turned on.

@@ -57,7 +57,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                            struct emulator *emulator)
 {
     
-    local_persist int x_offset = 0;
+    local_persist int x_offset = 0; // TODO: Remove local_persist
     
     if (input->numeric_1.ended_down)
     {
@@ -67,9 +67,9 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     int y_offset = 0;
     emulator_output_sound(sound_buffer);
     
-    local_persist int first_run = 1;
+    local_persist int first_run = 1; // TODO: Remove local_persist
     
-    if (first_run)
+    if (first_run) // TODO: Remove
     {
         first_run = 0;
         //render_weird_gradient(buffer, x_offset, y_offset);
@@ -81,6 +81,21 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         }
     }
     
+    if (emulator->delay_timer > 0)
+    {
+        --emulator->delay_timer;
+    }
+    
+    if (emulator->sound_timer > 0)
+    {
+        --emulator->sound_timer;
+    }
+    
+    if (emulator->sound_timer < 0)
+    {
+        OutputDebugStringA("Beep!");
+        // TODO: Play sound
+    }
     
     int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - emulator->start_time_ms;
     
@@ -363,6 +378,21 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         {
             switch (emulator->nn)
             {
+                case 0x07:
+                {
+                    OutputDebugStringA("Vx = get_delay()\n");
+                    emulator->general_purpose_registers[emulator->x] = emulator->delay_timer;
+                } break;
+                case 0x15:
+                {
+                    OutputDebugStringA("delay_timer(Vx)\n");
+                    emulator->delay_timer = emulator->general_purpose_registers[emulator->x];
+                } break;
+                case 0x18:
+                {
+                    OutputDebugStringA("sound_timer(Vx)\n");
+                    emulator->sound_timer = emulator->general_purpose_registers[emulator->x];
+                } break;
                 case 0x29:
                 {
                     OutputDebugStringA("I = sprite_addr[Vx]\n");
