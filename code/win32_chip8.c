@@ -544,6 +544,7 @@ internal void
 win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down)
 {
     new_state->ended_down = is_down;
+    new_state->is_down = is_down;
     ++new_state->half_transition_count;
 }
 
@@ -569,15 +570,9 @@ win32_process_pending_messages(struct emulator_keyboard_input *input)
                 b32 was_down = ((message.lParam & (1 << 30)) != 0); // NOTE: The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
                 u32 vk_code = message.wParam;
                 
-                if (is_down != was_down)
+                if (is_down)
                 {
-                    b32 alt_key_was_down = ((message.lParam & (1 << 29)) != 0);
-                    
-                    if ((vk_code == VK_F4) && alt_key_was_down)
-                    {
-                        global_running = false;
-                    }
-                    else if (vk_code == '1')
+                    if (vk_code == '1')
                     {
                         win32_process_keyboard_message(&input->numeric_1, is_down);
                         
@@ -651,6 +646,16 @@ win32_process_pending_messages(struct emulator_keyboard_input *input)
                     else if (vk_code == 'V')
                     {
                         win32_process_keyboard_message(&input->V, is_down);
+                    }
+                }
+                
+                if (is_down != was_down)
+                {
+                    b32 alt_key_was_down = ((message.lParam & (1 << 29)) != 0);
+                    
+                    if ((vk_code == VK_F4) && alt_key_was_down)
+                    {
+                        global_running = false;
                     }
                 } break;
                 

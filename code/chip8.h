@@ -60,6 +60,7 @@ struct emulator_button_state
 {
     s32 half_transition_count;
     b32 ended_down;
+    b32 is_down;
 };
 
 struct emulator_keyboard_input

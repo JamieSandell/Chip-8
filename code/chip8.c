@@ -373,6 +373,26 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 source_row += C_DISPLAY_WIDTH;
             }
         } break;
+        case 0xE:
+        {
+            switch (emulator->nn)
+            {
+                case 0x9E:
+                {
+                    OutputDebugString("if (key() == Vx)\n");
+                    
+                    if (input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
+                    {
+                        emulator->pc += 2;
+                    }
+                } break;
+                default:
+                {
+                    snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
+                    OutputDebugStringA(g_message);
+                } break;
+            } break;
+        } break;
         case 0xF:
         {
             switch (emulator->nn)
