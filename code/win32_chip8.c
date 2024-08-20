@@ -76,11 +76,18 @@ WinMain (HINSTANCE instance,
             struct emulator emulator = {0};
             emulator_init(&emulator);
             
+            struct emulator_keyboard_input *old_input = &inputs[0];
+            struct emulator_keyboard_input *new_input = &inputs[1];
+            struct emulator_keyboard_input *temp_input = NULL;
+            
             while (global_running)
             {
-                struct emulator_keyboard_input *old_input = &inputs[0];
-                struct emulator_keyboard_input *new_input = &inputs[1];
-                struct emulator_keyboard_input *temp_input = NULL;
+                for (int key = 0; key < 16; ++key) // TODO: Remove hardcoding
+                {
+                    new_input->buttons[key].ended_down = old_input->buttons[key].ended_down;
+                    new_input->buttons[key].is_down = old_input->buttons[key].is_down;
+                    new_input->buttons[key].half_transition_count = 0; // TODO: Needed?
+                }
                 
                 win32_process_pending_messages(new_input);
                 
@@ -570,7 +577,7 @@ win32_process_pending_messages(struct emulator_keyboard_input *input)
                 b32 was_down = ((message.lParam & (1 << 30)) != 0); // NOTE: The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
                 u32 vk_code = message.wParam;
                 
-                if (is_down)
+                if (is_down != was_down)
                 {
                     if (vk_code == '1')
                     {
@@ -578,12 +585,12 @@ win32_process_pending_messages(struct emulator_keyboard_input *input)
                         
                         if (is_down)
                         {
-                            OutputDebugString("1 is down");
+                            OutputDebugString("1 is down\n");
                         }
                         
                         if (was_down)
                         {
-                            OutputDebugString("1 was down");
+                            OutputDebugString("1 was down\n");
                         }
                         
                     }

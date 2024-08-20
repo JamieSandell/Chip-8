@@ -125,6 +125,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     emulator->pc += 2;
     ++emulator->instruction_count;
     
+    for (int key = 0; key < 16; ++key)
+    {
+        if (input->buttons[key].is_down)
+        {
+            snprintf(g_message, C_MAX_MESSAGE_SIZE, "%d is down.\n", key);
+            OutputDebugStringA(g_message);
+        }
+    }
+    
     switch (emulator->opcode)
     {
         case 0:
@@ -171,7 +180,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         }
         case 1:
         {
-            OutputDebugStringA("goto NNN\n");
+            //OutputDebugStringA("goto NNN\n");
             emulator->pc = emulator->nnn;
         } break;
         case 2:
