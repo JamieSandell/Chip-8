@@ -386,6 +386,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                         emulator->pc += 2;
                     }
                 } break;
+                case 0xA1:
+                {
+                    OutputDebugString("if (key() != Vx)\n");
+                    
+                    if (!input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
+                    {
+                        emulator->pc += 2;
+                    }
+                } break;
                 default:
                 {
                     snprintf(g_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
