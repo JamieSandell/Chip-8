@@ -56,15 +56,6 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
 {
-    
-    local_persist int x_offset = 0; // TODO: Remove local_persist
-    
-    if (input->numeric_1.ended_down)
-    {
-        x_offset += 1;
-    }
-    
-    int y_offset = 0;
     emulator_output_sound(sound_buffer);
     
     local_persist int first_run = 1; // TODO: Remove local_persist
@@ -428,7 +419,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     
                     for (key = 0; key < 16; ++key)
                     {
-                        if (input->buttons[key].ended_down)
+                        if (input->buttons[key].was_down && !input->buttons[key].is_down)
                         {
                             key_pressed = true;
                             break;

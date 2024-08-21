@@ -73,7 +73,7 @@ internal void
 win32_init_x_audio(void);
 
 internal void
-win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down);
+win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down, b32 was_down); // TODO: Replace all b32s with bool
 
 internal void
 win32_process_pending_messages(struct emulator_keyboard_input *input);

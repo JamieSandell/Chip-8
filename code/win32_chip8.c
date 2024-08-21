@@ -71,25 +71,15 @@ WinMain (HINSTANCE instance,
             
             //win32_init_x_audio();
             
-            struct emulator_keyboard_input inputs[2] = {0};
+            struct emulator_keyboard_input keyboard_input = {0};
+            const struct emulator_keyboard_input empty_keyboard_input = {0};
             
             struct emulator emulator = {0};
             emulator_init(&emulator);
             
-            struct emulator_keyboard_input *old_input = &inputs[0];
-            struct emulator_keyboard_input *new_input = &inputs[1];
-            struct emulator_keyboard_input *temp_input = NULL;
-            
             while (global_running)
             {
-                for (int key = 0; key < 16; ++key) // TODO: Remove hardcoding
-                {
-                    new_input->buttons[key].ended_down = old_input->buttons[key].ended_down;
-                    new_input->buttons[key].is_down = old_input->buttons[key].is_down;
-                    new_input->buttons[key].half_transition_count = 0; // TODO: Needed?
-                }
-                
-                win32_process_pending_messages(new_input);
+                win32_process_pending_messages(&keyboard_input);
                 
                 // NOTE: DirectSound test
                 DWORD byte_to_lock;
@@ -134,11 +124,9 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.height = global_back_buffer.height;
                 bitmap_buffer.pitch = global_back_buffer.pitch;
                 
-                emulator_update_and_render(&bitmap_buffer, &sound_buffer, new_input, &emulator);
+                emulator_update_and_render(&bitmap_buffer, &sound_buffer, &keyboard_input, &emulator);
                 
-                temp_input = new_input;
-                new_input = old_input;
-                old_input = temp_input;
+                keyboard_input = empty_keyboard_input;
                 
                 if (is_sound_valid)
                 {
@@ -548,11 +536,10 @@ win32_fill_sound_buffer(struct win32_sound_output *sound_output, DWORD byte_to_l
 }
 
 internal void
-win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down)
+win32_process_keyboard_message(struct emulator_button_state *new_state, b32 is_down, b32 was_down)
 {
-    new_state->ended_down = is_down;
     new_state->is_down = is_down;
-    ++new_state->half_transition_count;
+    new_state->was_down = was_down;
 }
 
 internal void
@@ -577,82 +564,71 @@ win32_process_pending_messages(struct emulator_keyboard_input *input)
                 b32 was_down = ((message.lParam & (1 << 30)) != 0); // NOTE: The previous key state. The value is 1 if the key is down before the message is sent, or it is zero if the key is up.
                 u32 vk_code = message.wParam;
                 
-                if (is_down != was_down)
+                if (is_down)
                 {
                     if (vk_code == '1')
                     {
-                        win32_process_keyboard_message(&input->numeric_1, is_down);
-                        
-                        if (is_down)
-                        {
-                            OutputDebugString("1 is down\n");
-                        }
-                        
-                        if (was_down)
-                        {
-                            OutputDebugString("1 was down\n");
-                        }
-                        
+                        win32_process_keyboard_message(&input->numeric_1, is_down, was_down);
                     }
                     else if (vk_code == '2')
                     {
-                        win32_process_keyboard_message(&input->numeric_2, is_down);
+                        win32_process_keyboard_message(&input->numeric_2, is_down, was_down);
                     }
                     else if (vk_code == '3')
                     {
-                        win32_process_keyboard_message(&input->numeric_3, is_down);
+                        win32_process_keyboard_message(&input->numeric_3, is_down, was_down);
                     }
                     else if (vk_code == '4')
                     {
-                        win32_process_keyboard_message(&input->numeric_4, is_down);
+                        win32_process_keyboard_message(&input->numeric_4, is_down, was_down);
                     }
                     else if (vk_code == 'Q')
                     {
-                        win32_process_keyboard_message(&input->Q, is_down);
+                        win32_process_keyboard_message(&input->Q, is_down, was_down);
                     }
                     else if (vk_code == 'W')
                     {
-                        win32_process_keyboard_message(&input->W, is_down);
+                        win32_process_keyboard_message(&input->W, is_down, was_down);
                     }
                     else if (vk_code == 'E')
                     {
-                        win32_process_keyboard_message(&input->E, is_down);
+                        win32_process_keyboard_message(&input->E, is_down, was_down);
                     }
                     else if (vk_code == 'R')
                     {
-                        win32_process_keyboard_message(&input->R, is_down);
+                        win32_process_keyboard_message(&input->R, is_down, was_down);
                     }
                     else if (vk_code == 'A')
                     {
-                        win32_process_keyboard_message(&input->A, is_down);
+                        win32_process_keyboard_message(&input->A, is_down, was_down);
                     }
                     else if (vk_code == 'S')
                     {
-                        win32_process_keyboard_message(&input->S, is_down);
+                        win32_process_keyboard_message(&input->S, is_down, was_down);
                     }
                     else if (vk_code == 'D')
                     {
-                        win32_process_keyboard_message(&input->D, is_down);
+                        win32_process_keyboard_message(&input->D, is_down, was_down);
                     }
                     else if (vk_code == 'F')
                     {
-                        win32_process_keyboard_message(&input->F, is_down);
+                        win32_process_keyboard_message(&input->F, is_down, was_down);
                     }
                     else if (vk_code == 'Z')
                     {
-                        win32_process_keyboard_message(&input->Z, is_down);
+                        win32_process_keyboard_message(&input->Z, is_down, was_down);
                     }
                     else if (vk_code == 'X')
                     {
-                        win32_process_keyboard_message(&input->X, is_down);
+                        win32_process_keyboard_message(&input->X, is_down, was_down);
                     }
                     else if (vk_code == 'C')
                     {
-                        win32_process_keyboard_message(&input->C, is_down);
+                        win32_process_keyboard_message(&input->C, is_down, was_down);
                     }
                     else if (vk_code == 'V')
                     {
-                        win32_process_keyboard_message(&input->V, is_down);
+                        win32_process_keyboard_message(&input->V, is_down, was_down);
                     }
                 }
                 
