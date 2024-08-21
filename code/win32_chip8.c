@@ -15,6 +15,7 @@
 global_variable b32 global_running;
 global_variable struct win32_offscreen_buffer global_back_buffer;
 global_variable LARGE_INTEGER global_query_performance_frequency;
+global_variable int64_t global_performance_counter_frequency;
 
 int CALLBACK
 WinMain (HINSTANCE instance,
@@ -23,9 +24,7 @@ WinMain (HINSTANCE instance,
          int       show_command)
 {
     QueryPerformanceFrequency(&global_query_performance_frequency);
-    LARGE_INTEGER perf_count_frequency_result; // TODO: remove
-    QueryPerformanceFrequency(&perf_count_frequency_result);
-    s64 perf_count_frequency = perf_count_frequency_result.QuadPart;
+    global_performance_counter_frequency = global_query_performance_frequency.QuadPart;
     
     WNDCLASS window_class = {0};
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
@@ -55,8 +54,7 @@ WinMain (HINSTANCE instance,
             HDC device_context = GetDC(window); // NOTE: Since we specified SC_OWNDC we can use it forever, no need to get and release every loop iteration.
             win32_resize_dib_section(&global_back_buffer, C_DISPLAY_WIDTH, C_DISPLAY_HEIGHT);
             global_running = true;
-            LARGE_INTEGER last_counter;
-            QueryPerformanceCounter(&last_counter);
+            LARGE_INTEGER last_counter = win32_get_wall_clock();
             u64 last_cycle_count = __rdtsc();
             
             struct win32_sound_output sound_output = {};
@@ -137,13 +135,18 @@ WinMain (HINSTANCE instance,
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
                 
-                LARGE_INTEGER end_counter;
-                QueryPerformanceCounter(&end_counter);
+                LARGE_INTEGER work_counter = win32_get_wall_clock();
+                float work_seconds_elapsed = win32_get_seconds_elapsed(last_counter, work_counter);
+                
+                float seconds_elapsed_for_frame = work_seconds_elapsed;
+                while()
+                {}
+                
                 u64 end_cycle_count = __rdtsc();
                 s64 counter_elapsed = end_counter.QuadPart - last_counter.QuadPart;
                 s64 cycles_elapsed = end_cycle_count - last_cycle_count;
-                f32 ms_per_frame = 1000.0f * (f32)counter_elapsed / (f32)perf_count_frequency;
-                f32 fps = (f32)(perf_count_frequency / (f32) counter_elapsed);
+                f32 ms_per_frame = 1000.0f * (f32)counter_elapsed / (f32)global_performance_counter_frequency;
+                f32 fps = (f32)(global_performance_counter_frequency / (f32) counter_elapsed);
                 f32 mega_cycles_per_frame = (f32)cycles_elapsed / (1000.0f * 1000.0f);
 #if 0
                 char buffer[256];
@@ -296,6 +299,21 @@ win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device
                   DIB_RGB_COLORS,
                   SRCCOPY
                   );
+}
+
+inline float
+win32_get_seconds_elapsed(LARGE_INTEGER start, LARGE_INTEGER end)
+{
+    float result = (float)(end.QuadPart - start.QuadPart) / (float)global_performance_counter_frequency;
+    return result;
+}
+
+inline LARGE_INTEGER
+win32_get_wall_clock(void)
+{
+    LARGE_INTEGER result;
+    QueryPerformanceCounter(&result);
+    return result;
 }
 
 internal struct win32_window_dimension

@@ -60,6 +60,12 @@ win32_clear_sound_buffer(struct win32_sound_output *buffer);
 internal void
 win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height);
 
+float
+win32_get_seconds_elapsed(LARGE_INTEGER start, LARGE_INTEGER end);
+
+LARGE_INTEGER
+win32_get_wall_clock(void);
+
 internal struct win32_window_dimension
 win32_get_window_dimension(HWND window);
 
