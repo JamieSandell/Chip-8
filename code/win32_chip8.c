@@ -134,27 +134,6 @@ WinMain (HINSTANCE instance,
                 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&global_back_buffer, device_context, dimension.width, dimension.height);
-                
-                LARGE_INTEGER work_counter = win32_get_wall_clock();
-                float work_seconds_elapsed = win32_get_seconds_elapsed(last_counter, work_counter);
-                
-                float seconds_elapsed_for_frame = work_seconds_elapsed;
-                while()
-                {}
-                
-                u64 end_cycle_count = __rdtsc();
-                s64 counter_elapsed = end_counter.QuadPart - last_counter.QuadPart;
-                s64 cycles_elapsed = end_cycle_count - last_cycle_count;
-                f32 ms_per_frame = 1000.0f * (f32)counter_elapsed / (f32)global_performance_counter_frequency;
-                f32 fps = (f32)(global_performance_counter_frequency / (f32) counter_elapsed);
-                f32 mega_cycles_per_frame = (f32)cycles_elapsed / (1000.0f * 1000.0f);
-#if 0
-                char buffer[256];
-                sprintf(buffer, "%.02f MS Per Frame, %.02ff FPS, %.02f Megacycles Per Frame\n", ms_per_frame, fps, mega_cycles_per_frame);
-                OutputDebugStringA(buffer);
-#endif
-                last_counter = end_counter;
-                last_cycle_count = end_cycle_count;
             }
         }
         else

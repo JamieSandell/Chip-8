@@ -11,7 +11,7 @@ emulator_init(struct emulator *emulator)
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file("..\\data\\IBM Logo.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file("..\\data\\3-corax.ch8"); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -63,8 +63,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     if (first_run) // TODO: Remove
     {
         first_run = 0;
-        //render_weird_gradient(buffer, x_offset, y_offset);
-        struct read_file_result result = platform_read_entire_file("W:\\data\\IBM Logo.ch8");
+        struct read_file_result result = platform_read_entire_file("W:\\data\\3-corax+.ch8");
         
         if (result.contents)
         {
