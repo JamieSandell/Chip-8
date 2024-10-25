@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <windows.h>
+#include "emulator_services.h"
 
 #ifndef WIN32_CHIP8_H
 #define WIN32_CHIP8_H
