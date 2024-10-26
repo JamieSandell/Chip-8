@@ -10,13 +10,13 @@ struct read_file_result
     void *contents;
 };
 
-static void
+void
 platform_free_file_memory(void *memory);
 
-static int_least64_t
+int_least64_t
 platform_get_milliseconds_now(void);
 
-static struct read_file_result
+struct read_file_result
 platform_read_entire_file(const char *filename);
 
 #endif

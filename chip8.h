@@ -18,6 +18,4 @@ safe_truncate_uint64(uint64_t value)
     return (uint32_t)value;
 }
 
-
-
-#endif //CHIP8_H
+#endif
