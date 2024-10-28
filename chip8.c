@@ -12,14 +12,14 @@
 #include "stack.h"
 
 void
-emulator_init(struct emulator *emulator)
+emulator_load_rom(struct emulator *emulator)
 {
     if (emulator->memory)
     {
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file(".\\data\\IBM Logo.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file(".\\data\\3-corax.ch8"); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -44,20 +44,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                            struct emulator_sound_output_buffer *sound_buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
-{ 
-    static bool first_run = true; // TODO: Remove local_persist
-    
-    if (first_run) // TODO: Remove
-    {
-        first_run = false;
-        struct read_file_result result = platform_read_entire_file(".\\data\\IBM Logo.ch8");
-        
-        if (result.contents)
-        {
-            memcpy(emulator->memory, result.contents, result.contents_size);
-        }
-    }
-    
+{    
     if (emulator->delay_timer > 0)
     {
         --emulator->delay_timer;
@@ -163,8 +150,8 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         case 2:
         {
             OutputDebugStringA("*(0xNNN)()\n");
-            emulator->pc = emulator->nnn;
             push(emulator->pc);
+            emulator->pc = emulator->nnn;
         } break;
         case 3:
         {
@@ -229,7 +216,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     OutputDebugStringA("Vx += Vy\n");
                     uint16_t vx_vy = (uint16_t)(emulator->general_purpose_registers[emulator->x] + emulator->general_purpose_registers[emulator->y]);
                     emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] + emulator->general_purpose_registers[emulator->y]);
-                    emulator->general_purpose_registers[0xF] = vx_vy> UCHAR_MAX ? 1 : 0;
+                    emulator->general_purpose_registers[0xF] = vx_vy > UCHAR_MAX ? 1 : 0;
                     
                 } break;
                 case 5:
@@ -244,9 +231,9 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 6:
                 {
                     OutputDebugStringA("Vx >>= 1\n");
-                    uint8_t *x = (uint8_t*)&emulator->general_purpose_registers[emulator->x];
-                    emulator->general_purpose_registers[0xF] = *x & 0x1;
-                    *x >>= 1;
+                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
+                    emulator->general_purpose_registers[emulator->x] >>= 1;
+                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] & 0x1;
                 } break;
                 case 7:
                 {
@@ -254,14 +241,15 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     uint8_t *x = (uint8_t *)&emulator->general_purpose_registers[emulator->x];
                     uint8_t *y = (uint8_t *)&emulator->general_purpose_registers[emulator->y];
                     
-                    emulator->general_purpose_registers[0xF] = *x >= *y ? 1 : 0;
                     *x = (uint8_t)(*y - *x);
+                    emulator->general_purpose_registers[0xF] = *x > *y ? 1 : 0; // Do Vx - Vy and store that value in Vx. If Vx is greater than Vy, then Vf = 1, else Vf =0 
                 } break;
                 case 0xE:
                 {
                     OutputDebugStringA("Vx <<= 1\n");
-                    uint8_t *x = (uint8_t*)&emulator->general_purpose_registers[emulator->x];
-                    emulator->general_purpose_registers[0xF] = *x & 0x80;
+                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
+                    emulator->general_purpose_registers[emulator->x] <<= 1;
+                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->x] & 0x80);
                 } break;
                 default:
                 {

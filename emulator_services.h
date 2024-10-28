@@ -78,7 +78,7 @@ struct emulator_sound_output_buffer
 };
 
 void
-emulator_init(struct emulator *emulator);
+emulator_load_rom(struct emulator *emulator);
 
 void
 emulator_output_sound(struct emulator_sound_output_buffer *buffer);

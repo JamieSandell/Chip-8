@@ -52,7 +52,7 @@ WinMain (HINSTANCE instance,
             const struct emulator_keyboard_input empty_keyboard_input = {0};
 
             struct emulator emulator = {0};
-            emulator_init(&emulator);
+            emulator_load_rom(&emulator);
             
             while (internal_running)
             {
