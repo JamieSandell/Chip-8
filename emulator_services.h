@@ -1,9 +1,9 @@
+#ifndef EMULATOR_SERVICES_H
+#define EMULATOR_SERVICES_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "constants.h"
-
-#ifndef EMULATOR_SERVICES_H
-#define EMULATOR_SERVICES_H
 
 // Services that the emulator provides to the platform layer.
 

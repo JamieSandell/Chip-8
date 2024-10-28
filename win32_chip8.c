@@ -1,10 +1,14 @@
 #include <stdbool.h>
 #include <windows.h>
 #include "constants.h"
+#include "globals.h"
+#include "platform_services.h"
 #include "win32_chip8.h"
 
 static struct win32_offscreen_buffer internal_back_buffer;
 static bool internal_running;
+static int64_t internal_performance_counter_frequency;
+static LARGE_INTEGER internal_query_performance_frequency;
 
 int CALLBACK
 WinMain (HINSTANCE instance,
@@ -37,14 +41,17 @@ WinMain (HINSTANCE instance,
         
         if (window)
         {
+            QueryPerformanceFrequency(&internal_query_performance_frequency);
+            internal_performance_counter_frequency = internal_query_performance_frequency.QuadPart;
+
             HDC device_context = GetDC(window);
             win32_resize_dib_section(&internal_back_buffer, C_DISPLAY_WIDTH, C_DISPLAY_HEIGHT);
             internal_running = true;
 
             struct emulator_keyboard_input keyboard_input = {0};
-            const struct emulator_keyboard_input empty_keyboard_input = {0};            
-            struct emulator emulator = {0};
+            const struct emulator_keyboard_input empty_keyboard_input = {0};
 
+            struct emulator emulator = {0};
             emulator_init(&emulator);
             
             while (internal_running)
@@ -61,6 +68,9 @@ WinMain (HINSTANCE instance,
                 emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
                 
                 keyboard_input = empty_keyboard_input;
+
+                struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
             }
         }
         else
@@ -74,6 +84,118 @@ WinMain (HINSTANCE instance,
     return -1;
 }
 
+int_least64_t
+platform_get_milliseconds_now(void)
+{
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    
+    return (1000LL * now.QuadPart) / internal_query_performance_frequency.QuadPart;
+}
+
+void
+platform_free_file_memory(void *memory)
+{
+    if (memory)
+    {
+        VirtualFree(memory, 0, MEM_RELEASE);
+    }
+}
+
+struct read_file_result
+platform_read_entire_file(const char *filename)
+{
+    struct read_file_result result = {0};
+    
+    HANDLE file_handle = CreateFileA(filename,
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     NULL,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     0);
+    
+    if (file_handle != INVALID_HANDLE_VALUE)
+    {
+        LARGE_INTEGER file_size;
+        
+        if (GetFileSizeEx(file_handle, &file_size))
+        {
+            result.contents = VirtualAlloc(0,
+                                           file_size.QuadPart,
+                                           MEM_RESERVE | MEM_COMMIT,
+                                           PAGE_READWRITE);
+            
+            if (result.contents)
+            {
+                DWORD bytes_read;
+                
+                if (ReadFile(file_handle,
+                             result.contents,
+                             win32_safe_truncate_uint64(file_size.QuadPart),
+                             &bytes_read,
+                             NULL)
+                    && (win32_safe_truncate_uint64(file_size.QuadPart) == bytes_read))
+                {
+                    result.contents_size = bytes_read;
+                }
+                else
+                {
+                    platform_free_file_memory(result.contents);
+                    result.contents = NULL;
+                    // TODO: Logging, failed to read file.
+                }
+            }
+            else
+            {
+                // TODO: Logging, memory allocation failed.
+            }
+        }
+        else
+        {
+            // TODO: Logging, file size evaluation failed.
+        }
+        
+        CloseHandle(file_handle);
+    }
+    else
+    {
+        // TODO: Logging, handle creation failed.
+    }
+    
+    return result;
+}
+
+static void
+win32_display_buffer_in_window(struct win32_offscreen_buffer *buffer, HDC device_context, int window_width, int window_height)
+{
+    StretchDIBits(device_context,
+                  0,
+                  0,
+                  window_width,
+                  window_height,
+                  0,
+                  0,
+                  buffer->width,
+                  buffer->height,
+                  buffer->memory,
+                  &(buffer->info),
+                  DIB_RGB_COLORS,
+                  SRCCOPY
+                  );
+}
+
+static struct win32_window_dimension
+win32_get_window_dimension(HWND window)
+{
+    struct win32_window_dimension result;
+    RECT client_rect;
+    GetClientRect(window, &client_rect);
+    result.width = client_rect.right - client_rect.left;
+    result.height = client_rect.bottom - client_rect.top;
+    return result;
+}
+
 LRESULT CALLBACK
 win32_main_window_callback(HWND window,
                            UINT message,
@@ -81,7 +203,52 @@ win32_main_window_callback(HWND window,
                            LPARAM l_param)
 {
     LRESULT result = 0;
-
+    
+    switch (message)
+    {
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        {
+            Assert("Keyboard input came in through a non-dispatch message.");
+        }break;
+        
+        case WM_PAINT:
+        {
+            PAINTSTRUCT paint;
+            HDC device_context = BeginPaint(window, &paint);
+            struct win32_window_dimension dimension = win32_get_window_dimension(window);
+            win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
+            EndPaint(window, &paint);
+        } break;
+        
+        case WM_SIZE:
+        {
+        } break;
+        
+        case WM_DESTROY:
+        {
+            internal_running = false;
+        } break;
+        
+        case WM_CLOSE:
+        {
+            internal_running = false;
+        } break;
+        
+        case WM_ACTIVATEAPP:
+        {
+            OutputDebugString("WM_ACTIVATEAPP");
+        } break;
+        
+        default:
+        {
+            result = DefWindowProc(window, message, w_param, l_param);
+        }
+        break;
+    }
+    
     return result;
 }
 

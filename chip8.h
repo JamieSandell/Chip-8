@@ -1,9 +1,9 @@
+#ifndef CHIP8_H
+#define CHIP8_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "constants.h"
-
-#ifndef CHIP8_H
-#define CHIP8_H
 
 #if DEBUG
 #define Assert(Expression) if (!(Expression)) { *(int) *0 = 0; }

@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #ifndef PLATFORM_SERVICES_H
 #define PLATFORM_SERVICES_H
+
+#include <stdint.h>
 
 //Services that the platform layer provides to the emulator.
 struct read_file_result
