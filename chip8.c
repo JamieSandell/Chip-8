@@ -215,7 +215,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("Vx += Vy\n");
                     uint16_t vx_vy = (uint16_t)(emulator->general_purpose_registers[emulator->x] + emulator->general_purpose_registers[emulator->y]);
-                    emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] + emulator->general_purpose_registers[emulator->y]);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)vx_vy;
                     emulator->general_purpose_registers[0xF] = vx_vy > UCHAR_MAX ? 1 : 0;
                     
                 } break;
@@ -231,9 +231,8 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 6:
                 {
                     OutputDebugStringA("Vx >>= 1\n");
-                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
-                    emulator->general_purpose_registers[emulator->x] >>= 1;
-                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] & 0x1;
+                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] & 0x1u;
+                    emulator->general_purpose_registers[emulator->x] = (emulator->general_purpose_registers[emulator->x] >> 1);
                 } break;
                 case 7:
                 {
@@ -247,9 +246,8 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 0xE:
                 {
                     OutputDebugStringA("Vx <<= 1\n");
-                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
-                    emulator->general_purpose_registers[emulator->x] <<= 1;
-                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->x] & 0x80);
+                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->x] & 0x80u);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] << 1);
                 } break;
                 default:
                 {
@@ -371,7 +369,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 default:
                 {
-                    snprintf(global_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the F instruction.\n");
+                    snprintf(global_message, C_MAX_MESSAGE_SIZE, "Error decoding the rest of the E instruction.\n");
                     OutputDebugStringA(global_message);
                 } break;
             } break;
@@ -436,18 +434,18 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("reg_dump(Vx, &I)\n");
                     
-                    for (int reg = 0, x = emulator->general_purpose_registers[emulator->x];  reg < x; ++reg)
+                    for (int reg = 0, i = emulator->i; reg <= emulator->general_purpose_registers[emulator->x]; ++reg, ++i)
                     {
-                        emulator->memory[emulator->i++] = emulator->general_purpose_registers[reg];
+                        emulator->memory[i] = emulator->general_purpose_registers[reg];
                     }
                 } break;
                 case 0x65:
                 {
                     OutputDebugStringA("reg_load(Vx, &I)\n");
                     
-                    for (int reg = 0, vx = emulator->general_purpose_registers[emulator->x]; reg < vx; ++reg)
+                    for (int reg = 0, i = emulator->i; reg <= emulator->general_purpose_registers[emulator->x]; ++reg, ++i)
                     {
-                        emulator->general_purpose_registers[reg] = emulator->memory[emulator->i++];
+                        emulator->general_purpose_registers[reg] = emulator->memory[i];
                     }
                 } break;
                 default:

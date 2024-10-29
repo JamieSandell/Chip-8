@@ -12,7 +12,7 @@ struct emulator // TODO: put in optimal order to minimise padding
     uint8_t memory[C_MEMORY_SIZE];
     int8_t delay_timer;
     int8_t sound_timer;
-    int8_t general_purpose_registers[C_GENERAL_REGISTERS_SIZE];
+    uint8_t general_purpose_registers[C_GENERAL_REGISTERS_SIZE];
     uint8_t x;
     uint8_t y;
     uint8_t n;
