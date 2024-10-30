@@ -417,6 +417,11 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     OutputDebugStringA("sound_timer(Vx)\n");
                     emulator->sound_timer = emulator->general_purpose_registers[emulator->x];
                 } break;
+                /*case 0x1E:
+                {
+                    OutputDebugStringA("I += Vx\n");
+                    emulator->i = (uint16_t)(emulator->i + emulator->general_purpose_registers[emulator->x]);
+                } break;*/
                 case 0x29:
                 {
                     OutputDebugStringA("I = sprite_addr[Vx]\n");

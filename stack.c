@@ -34,5 +34,5 @@ void push(int16_t value)
     snprintf(global_message, C_MAX_STACK_SIZE, "Error: can't push to a full stack.\n");
     terminate(is_full(), global_message);
 
-    contents[top++] = value;
+    contents[++top] = value;
 }
