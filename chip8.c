@@ -439,10 +439,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("reg_dump(Vx, &I)\n");
                     
-                    for (int reg = 0, i = emulator->i; reg <= emulator->general_purpose_registers[emulator->x]; ++reg, ++i)
+                    for (int i = 0; i <= emulator->x; ++i)
                     {
-                        emulator->memory[i] = emulator->general_purpose_registers[reg];
+                        emulator->memory[emulator->i + i] = emulator->general_purpose_registers[i];
                     }
+
+                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1);
                 } break;
                 case 0x65:
                 {
