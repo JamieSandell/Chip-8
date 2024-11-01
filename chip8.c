@@ -450,10 +450,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("reg_load(Vx, &I)\n");
                     
-                    for (int reg = 0, i = emulator->i; reg <= emulator->general_purpose_registers[emulator->x]; ++reg, ++i)
+                    for (int i = emulator->i; i <= emulator->x; ++i)
                     {
-                        emulator->general_purpose_registers[reg] = emulator->memory[i];
+                        emulator->general_purpose_registers[i] = emulator->memory[emulator->i + i];
                     }
+
+                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1);
                 } break;
                 default:
                 {
