@@ -417,11 +417,12 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     OutputDebugStringA("sound_timer(Vx)\n");
                     emulator->sound_timer = emulator->general_purpose_registers[emulator->x];
                 } break;
-                /*case 0x1E:
+                case 0x1E:
                 {
                     OutputDebugStringA("I += Vx\n");
                     emulator->i = (uint16_t)(emulator->i + emulator->general_purpose_registers[emulator->x]);
-                } break;*/
+                    emulator->general_purpose_registers[0xF] = emulator->i > 0x0FFF ? 1 : 0;
+                } break;
                 case 0x29:
                 {
                     OutputDebugStringA("I = sprite_addr[Vx]\n");
@@ -444,18 +445,18 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                         emulator->memory[emulator->i + i] = emulator->general_purpose_registers[i];
                     }
 
-                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1);
+                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1); // TODO: Create a toggle for this "quirk"
                 } break;
                 case 0x65:
                 {
                     OutputDebugStringA("reg_load(Vx, &I)\n");
                     
-                    for (int i = emulator->i; i <= emulator->x; ++i)
+                    for (int i = 0; i <= emulator->x; ++i)
                     {
                         emulator->general_purpose_registers[i] = emulator->memory[emulator->i + i];
                     }
 
-                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1);
+                    //emulator->i = (uint16_t)(emulator->i + emulator->x + 1); // TODO: Create a toggle for this "quirk"
                 } break;
                 default:
                 {
