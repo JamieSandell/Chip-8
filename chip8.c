@@ -19,7 +19,7 @@ emulator_load_rom(struct emulator *emulator)
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file(".\\data\\3-corax.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file(".\\data\\4-flags.ch8"); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -222,11 +222,9 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 5:
                 {
                     OutputDebugStringA("Vx -= Vy\n");
-                    uint8_t *x = (uint8_t *)&emulator->general_purpose_registers[emulator->x];
-                    uint8_t *y = (uint8_t *)&emulator->general_purpose_registers[emulator->y];
                     
-                    emulator->general_purpose_registers[0xF] = *x > *y ? 1 : 0;
-                    *x = (uint8_t)(*x - *y);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] - emulator->general_purpose_registers[emulator->y]);
+                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] > emulator->general_purpose_registers[emulator->y] ? 1 : 0;
                 } break;
                 case 6:
                 {
