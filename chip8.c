@@ -223,8 +223,9 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 {
                     OutputDebugStringA("Vx -= Vy\n");
                     
-                    emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] - emulator->general_purpose_registers[emulator->y]);
-                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] > emulator->general_purpose_registers[emulator->y] ? 1 : 0;
+                    uint16_t vx_vy = (uint16_t)(emulator->general_purpose_registers[emulator->x] - emulator->general_purpose_registers[emulator->y]);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)vx_vy;
+                    emulator->general_purpose_registers[0xF] = vx_vy <= UCHAR_MAX ? 1 : 0;                    
                 } break;
                 case 6:
                 {
@@ -235,17 +236,16 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 7:
                 {
                     OutputDebugStringA("Vx = Vy - Vx\n");
-                    uint8_t *x = (uint8_t *)&emulator->general_purpose_registers[emulator->x];
-                    uint8_t *y = (uint8_t *)&emulator->general_purpose_registers[emulator->y];
-                    
-                    *x = (uint8_t)(*y - *x);
-                    emulator->general_purpose_registers[0xF] = *x > *y ? 1 : 0; // Do Vx - Vy and store that value in Vx. If Vx is greater than Vy, then Vf = 1, else Vf =0 
+                    uint16_t vx_vy = (uint16_t)(emulator->general_purpose_registers[emulator->y] - emulator->general_purpose_registers[emulator->x]);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)vx_vy;
+                    emulator->general_purpose_registers[0xF] = vx_vy <= UCHAR_MAX ? 1 : 0;
                 } break;
                 case 0xE:
                 {
-                    OutputDebugStringA("Vx <<= 1\n");
-                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->x] & 0x80u);
+                    OutputDebugStringA("Vx <<= Vy\n");
+                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
                     emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] << 1);
+                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->y] & 0x80u);                    
                 } break;
                 default:
                 {
