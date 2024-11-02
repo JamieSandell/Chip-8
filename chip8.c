@@ -230,8 +230,9 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 6:
                 {
                     OutputDebugStringA("Vx >>= 1\n");
-                    emulator->general_purpose_registers[0xF] = emulator->general_purpose_registers[emulator->x] & 0x1u;
-                    emulator->general_purpose_registers[emulator->x] = (emulator->general_purpose_registers[emulator->x] >> 1);
+                    uint8_t lsb = (emulator->general_purpose_registers[emulator->x] & 0x1u);
+                    emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] >> 1);
+                    emulator->general_purpose_registers[0xF] = lsb;
                 } break;
                 case 7:
                 {
@@ -242,10 +243,10 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 } break;
                 case 0xE:
                 {
-                    OutputDebugStringA("Vx <<= Vy\n");
-                    emulator->general_purpose_registers[emulator->x] = emulator->general_purpose_registers[emulator->y];
+                    OutputDebugStringA("Vx <<= 1\n");
+                    uint8_t msb = (uint8_t)((emulator->general_purpose_registers[emulator->x] >> 7) & 0x1u);
                     emulator->general_purpose_registers[emulator->x] = (uint8_t)(emulator->general_purpose_registers[emulator->x] << 1);
-                    emulator->general_purpose_registers[0xF] = (uint8_t)(emulator->general_purpose_registers[emulator->y] & 0x80u);                    
+                    emulator->general_purpose_registers[0xF] = msb;                   
                 } break;
                 default:
                 {
