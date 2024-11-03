@@ -53,9 +53,15 @@ WinMain (HINSTANCE instance,
 
             struct emulator emulator = {0};
             emulator_load_rom(&emulator);
+
+            int frames_count = 0;
+            int_least64_t start_time_ms = platform_get_milliseconds_now();
+            int fps = 60;
             
             while (internal_running)
             {
+                int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - start_time_ms;                
+
                 win32_process_pending_messages(&keyboard_input);
 
                 struct emulator_offscreen_buffer bitmap_buffer = {0};
@@ -64,13 +70,30 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.width = internal_back_buffer.width;
                 bitmap_buffer.height = internal_back_buffer.height;
                 bitmap_buffer.pitch = internal_back_buffer.pitch;
-                
-                emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
-                
-                keyboard_input = empty_keyboard_input;
 
-                struct win32_window_dimension dimension = win32_get_window_dimension(window);
-                win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
+                /*
+                CPU: 1 - 2kHz (some roms are frequency sensitive, others relay on timers)
+
+                Timers: ~60 Hz with an option to adjust (to cheat :) )
+
+                FPS: 30 - 60 Hz. (this is not a true FPS since Chip8 doesn't have a notion of a frame, it updates part of the screen whenever it likes)
+                */
+
+                if (elapsed_time_ms < 1000LL && frames_count < fps)
+                {
+                    emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
+                    struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                    win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
+                    ++frames_count;
+                }
+
+                if (elapsed_time_ms > 1000LL)
+                {
+                    frames_count = 0;
+                    start_time_ms = platform_get_milliseconds_now();
+                }
+
+                keyboard_input = empty_keyboard_input;
             }
         }
         else

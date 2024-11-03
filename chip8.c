@@ -19,7 +19,7 @@ emulator_load_rom(struct emulator *emulator)
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file(".\\data\\4-flags.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file(".\\data\\5-quirks.ch8"); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -66,7 +66,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     // TODO: Remove hardcoding
     if (elapsed_time_ms <= 1000LL && emulator->instruction_count >= c_instructions_per_second)
     {
-        return;
+        //return;
     }
     
     if (elapsed_time_ms > 1000LL) // TODO: Remove hardcoding
@@ -354,7 +354,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                     
                     if (input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
                     {
-                        emulator->pc = (uint16_t)(emulator->pc + 2);
+                       emulator->pc = (uint16_t)(emulator->pc + 2);
                     }
                 } break;
                 case 0xA1:
