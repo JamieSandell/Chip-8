@@ -49,7 +49,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
     int_least64_t instructions_elapsed_time_ms = platform_get_milliseconds_now() - emulator->instrtuctions_start_time_ms;
     int_least64_t delay_timer_elapsed_time_ms = platform_get_milliseconds_now() - emulator->delay_timer_start_time_ms;
 
-    if (delay_timer_elapsed_time_ms  > 1000LL)
+    if (delay_timer_elapsed_time_ms  >= 1000LL)
     {
         if (emulator->delay_timer > 0)
         {
