@@ -26,7 +26,8 @@ struct emulator // TODO: put in optimal order to minimise padding
     uint8_t second_byte;
     uint8_t opcode;
     uint16_t instruction_count; // resets every second
-    int_least64_t start_time_ms;
+    int_least64_t instrtuctions_start_time_ms;
+    int_least64_t delay_timer_start_time_ms;
 };
 
 struct emulator_button_state

@@ -36,7 +36,8 @@ emulator_load_rom(struct emulator *emulator)
     
     emulator->pc = c_ram_offset;
     srand((unsigned int)time(0));
-    emulator->start_time_ms = platform_get_milliseconds_now();
+    emulator->instrtuctions_start_time_ms = platform_get_milliseconds_now();
+    emulator->delay_timer_start_time_ms = emulator->instrtuctions_start_time_ms;
 }
 
 void
@@ -45,34 +46,40 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
 {    
-    if (emulator->delay_timer > 0)
+    int_least64_t instructions_elapsed_time_ms = platform_get_milliseconds_now() - emulator->instrtuctions_start_time_ms;
+    int_least64_t delay_timer_elapsed_time_ms = platform_get_milliseconds_now() - emulator->delay_timer_start_time_ms;
+
+    if (delay_timer_elapsed_time_ms  > 1000LL)
     {
-        --emulator->delay_timer;
+        if (emulator->delay_timer > 0)
+        {
+            --emulator->delay_timer;
+        }
+        
+        if (emulator->sound_timer > 0)
+        {
+            --emulator->sound_timer;
+        }
+
+        emulator->delay_timer_start_time_ms = platform_get_milliseconds_now();
     }
-    
-    if (emulator->sound_timer > 0)
-    {
-        --emulator->sound_timer;
-    }
-    
+
     if (emulator->sound_timer < 0)
     {
         OutputDebugStringA("Beep!");
         // TODO: Play sound
     }
     
-    int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - emulator->start_time_ms;
-    
     // TODO: Remove hardcoding
-    if (elapsed_time_ms <= 1000LL && emulator->instruction_count >= c_instructions_per_second)
+    if (instructions_elapsed_time_ms <= 1000LL && emulator->instruction_count >= c_instructions_per_second)
     {
-        //return;
+        return;
     }
     
-    if (elapsed_time_ms > 1000LL) // TODO: Remove hardcoding
+    if (instructions_elapsed_time_ms > 1000LL) // TODO: Remove hardcoding
     {
         emulator->instruction_count = 0;
-        emulator->start_time_ms = platform_get_milliseconds_now();
+        emulator->instrtuctions_start_time_ms = platform_get_milliseconds_now();
     }
     
     emulator->first_byte = emulator->memory[emulator->pc];
@@ -351,6 +358,11 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
                 case 0x9E:
                 {
                     OutputDebugString("if (key() == Vx)\n");
+
+                    if (input->buttons[14].is_down)
+                    {
+                        OutputDebugString("if (key() == Vx)\n");
+                    }
                     
                     if (input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
                     {

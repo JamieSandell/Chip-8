@@ -55,12 +55,12 @@ WinMain (HINSTANCE instance,
             emulator_load_rom(&emulator);
 
             int frames_count = 0;
-            int_least64_t start_time_ms = platform_get_milliseconds_now();
-            int fps = 60;
+            int_least64_t instrtuctions_start_time_ms = platform_get_milliseconds_now();
+            int target_fps = 60;
             
             while (internal_running)
             {
-                int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - start_time_ms;                
+                int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;                
 
                 win32_process_pending_messages(&keyboard_input);
 
@@ -79,18 +79,19 @@ WinMain (HINSTANCE instance,
                 FPS: 30 - 60 Hz. (this is not a true FPS since Chip8 doesn't have a notion of a frame, it updates part of the screen whenever it likes)
                 */
 
-                if (elapsed_time_ms < 1000LL && frames_count < fps)
+                emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
+
+                if (elapsed_time_ms < 1000LL && frames_count < target_fps)
                 {
-                    emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
                     struct win32_window_dimension dimension = win32_get_window_dimension(window);
                     win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
                     ++frames_count;
                 }
 
-                if (elapsed_time_ms > 1000LL)
+                if (elapsed_time_ms >= 1000LL)
                 {
                     frames_count = 0;
-                    start_time_ms = platform_get_milliseconds_now();
+                    instrtuctions_start_time_ms = platform_get_milliseconds_now();
                 }
 
                 keyboard_input = empty_keyboard_input;
