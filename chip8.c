@@ -36,17 +36,15 @@ emulator_load_rom(struct emulator *emulator)
     
     emulator->pc = c_ram_offset;
     srand((unsigned int)time(0));
-    emulator->instrtuctions_start_time_ms = platform_get_milliseconds_now();
     emulator->delay_timer_start_time_ms = emulator->instrtuctions_start_time_ms;
 }
 
 void
-emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
+emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                            struct emulator_sound_output_buffer *sound_buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
 {    
-    int_least64_t instructions_elapsed_time_ms = platform_get_milliseconds_now() - emulator->instrtuctions_start_time_ms;
     int_least64_t delay_timer_elapsed_time_ms = platform_get_milliseconds_now() - emulator->delay_timer_start_time_ms;
 
     if (delay_timer_elapsed_time_ms  >= 1000LL)
@@ -69,19 +67,7 @@ emulator_update_and_render(struct emulator_offscreen_buffer *buffer,
         OutputDebugStringA("Beep!");
         // TODO: Play sound
     }
-    
-    // TODO: Remove hardcoding
-    if (instructions_elapsed_time_ms <= 1000LL && emulator->instruction_count >= c_instructions_per_second)
-    {
-        return;
-    }
-    
-    if (instructions_elapsed_time_ms > 1000LL) // TODO: Remove hardcoding
-    {
-        emulator->instruction_count = 0;
-        emulator->instrtuctions_start_time_ms = platform_get_milliseconds_now();
-    }
-    
+
     emulator->first_byte = emulator->memory[emulator->pc];
     emulator->second_byte = emulator->memory[emulator->pc + 1];
     emulator->instruction = (uint16_t)((emulator->first_byte << 8) | emulator->second_byte);

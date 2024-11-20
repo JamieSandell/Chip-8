@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "constants.h"
 
-const int32_t c_instructions_per_second = 660;
 /*
 Fonts are made up of 5 bytes.
 The first 4 bits (so half a byte) of each byte represents the pixels that should be turned on.
@@ -32,4 +31,5 @@ const uint8_t c_font_set[C_FONT_SET_SIZE] =
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 const uint8_t c_font_offset = 0x50;
+const uint16_t c_operations_per_cycle = 2;
 const uint16_t c_ram_offset = 0x200;

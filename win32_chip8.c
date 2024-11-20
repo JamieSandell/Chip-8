@@ -57,11 +57,10 @@ WinMain (HINSTANCE instance,
             int frames_count = 0;
             int_least64_t instrtuctions_start_time_ms = platform_get_milliseconds_now();
             int target_fps = 60;
+            float target_frame_rate_ms = (1 / target_fps) * 1000;
             
             while (internal_running)
-            {
-                int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;                
-
+            {     
                 win32_process_pending_messages(&keyboard_input);
 
                 struct emulator_offscreen_buffer bitmap_buffer = {0};
@@ -70,29 +69,20 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.width = internal_back_buffer.width;
                 bitmap_buffer.height = internal_back_buffer.height;
                 bitmap_buffer.pitch = internal_back_buffer.pitch;
+                
+                int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;
 
-                /*
-                CPU: 1 - 2kHz (some roms are frequency sensitive, others relay on timers)
-
-                Timers: ~60 Hz with an option to adjust (to cheat :) )
-
-                FPS: 30 - 60 Hz. (this is not a true FPS since Chip8 doesn't have a notion of a frame, it updates part of the screen whenever it likes)
-                */
-
-                emulator_update_and_render(&bitmap_buffer, NULL, &keyboard_input, &emulator);
-
-                if (elapsed_time_ms < 1000LL && frames_count < target_fps)
+                if (elapsed_time_ms <= target_frame_rate_ms)
                 {
-                    struct win32_window_dimension dimension = win32_get_window_dimension(window);
-                    win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
-                    ++frames_count;
-                }
+                    uint8_t target_operations_per_frame = emulator.hz / c_operations_per_cycle / target_fps;
+                    for (size_t i = 0; i < target_operations_per_frame; ++i)
+                    {
+                        emulator_process_opcode(&bitmap_buffer, NULL, &keyboard_input, &emulator);
+                    }     
+                }                          
 
-                if (elapsed_time_ms >= 1000LL)
-                {
-                    frames_count = 0;
-                    instrtuctions_start_time_ms = platform_get_milliseconds_now();
-                }
+                struct win32_window_dimension dimension = win32_get_window_dimension(window);
+                win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
 
                 keyboard_input = empty_keyboard_input;
             }

@@ -28,6 +28,7 @@ struct emulator // TODO: put in optimal order to minimise padding
     uint16_t instruction_count; // resets every second
     int_least64_t instrtuctions_start_time_ms;
     int_least64_t delay_timer_start_time_ms;
+    uint16_t hz;
 };
 
 struct emulator_button_state
@@ -85,7 +86,7 @@ void
 emulator_output_sound(struct emulator_sound_output_buffer *buffer);
 
 void
-emulator_update_and_render
+emulator_process_opcode
 (
     struct emulator_offscreen_buffer *buffer,
     struct emulator_sound_output_buffer *sound_buffer,
