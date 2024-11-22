@@ -72,7 +72,7 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.pitch = internal_back_buffer.pitch;
                 
                 int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;
-                uint8_t target_operations_per_frame = emulator.hz / c_operations_per_cycle / target_fps;
+                uint16_t target_operations_per_frame = (uint16_t)(emulator.hz / c_operations_per_cycle / target_fps);
 
                 if (elapsed_time_ms < target_frame_rate_ms && operations_per_frame_count < target_operations_per_frame)
                 {                    
