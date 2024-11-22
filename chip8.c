@@ -19,7 +19,7 @@ emulator_load_rom(struct emulator *emulator)
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file(".\\data\\5-quirks.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file(/*".\\data\\5-quirks.ch8"*/".\\data\\6-keypad.ch8"); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -37,6 +37,7 @@ emulator_load_rom(struct emulator *emulator)
     emulator->pc = c_ram_offset;
     srand((unsigned int)time(0));
     emulator->delay_timer_start_time_ms = emulator->instrtuctions_start_time_ms;
+    emulator->hz = 1320;
 }
 
 void

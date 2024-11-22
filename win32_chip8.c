@@ -57,7 +57,8 @@ WinMain (HINSTANCE instance,
             int frames_count = 0;
             int_least64_t instrtuctions_start_time_ms = platform_get_milliseconds_now();
             int target_fps = 60;
-            float target_frame_rate_ms = (1 / target_fps) * 1000;
+            float target_frame_rate_ms = (1 / (float)target_fps) * 1000;
+            uint8_t operations_per_frame_count = 0;
             
             while (internal_running)
             {     
@@ -71,20 +72,32 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.pitch = internal_back_buffer.pitch;
                 
                 int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;
+                uint8_t target_operations_per_frame = emulator.hz / c_operations_per_cycle / target_fps;
 
-                if (elapsed_time_ms <= target_frame_rate_ms)
-                {
-                    uint8_t target_operations_per_frame = emulator.hz / c_operations_per_cycle / target_fps;
-                    for (size_t i = 0; i < target_operations_per_frame; ++i)
+                if (elapsed_time_ms < target_frame_rate_ms && operations_per_frame_count < target_operations_per_frame)
+                {                    
+                    for (size_t i = 0; i < target_operations_per_frame; ++i, ++operations_per_frame_count)
                     {
                         emulator_process_opcode(&bitmap_buffer, NULL, &keyboard_input, &emulator);
                     }     
-                }                          
+                }
+
+                if (operations_per_frame_count == target_operations_per_frame)
+                {
+                    operations_per_frame_count = 0;
+                }
+
+                if (elapsed_time_ms >= target_frame_rate_ms)
+                {
+                    instrtuctions_start_time_ms = platform_get_milliseconds_now();
+                }
 
                 struct win32_window_dimension dimension = win32_get_window_dimension(window);
                 win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
 
                 keyboard_input = empty_keyboard_input;
+
+                Sleep(1);
             }
         }
         else
