@@ -99,7 +99,7 @@ emulator_load_rom(struct emulator *emulator)
         platform_free_file_memory(emulator->memory);
     }
     
-    struct read_file_result result = platform_read_entire_file(/*".\\data\\5-quirks.ch8"*/".\\data\\6-keypad.ch8"); // TODO: Don't hardcode
+    struct read_file_result result = platform_read_entire_file(".\\data\\5-quirks.ch8"/*".\\data\\6-keypad.ch8"*/); // TODO: Don't hardcode
     
     if (!result.contents)
     {
@@ -116,7 +116,6 @@ emulator_load_rom(struct emulator *emulator)
     
     emulator->pc = c_ram_offset;
     srand((unsigned int)time(0));
-    emulator->delay_timer_start_time_ms = emulator->instrtuctions_start_time_ms;
     emulator->hz = 1320;
 }
 
@@ -125,22 +124,16 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                            struct emulator_sound_output_buffer *sound_buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
-{    
-    int_least64_t delay_timer_elapsed_time_ms = platform_get_milliseconds_now() - emulator->delay_timer_start_time_ms;
+{
 
-    if (delay_timer_elapsed_time_ms  >= 1000LL)
+    if (emulator->delay_timer > 0)
     {
-        if (emulator->delay_timer > 0)
-        {
-            --emulator->delay_timer;
-        }
-        
-        if (emulator->sound_timer > 0)
-        {
-            --emulator->sound_timer;
-        }
-
-        emulator->delay_timer_start_time_ms = platform_get_milliseconds_now();
+        --emulator->delay_timer;
+    }
+    
+    if (emulator->sound_timer > 0)
+    {
+        --emulator->sound_timer;
     }
 
     if (emulator->sound_timer < 0)

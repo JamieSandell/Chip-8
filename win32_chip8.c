@@ -79,7 +79,7 @@ WinMain (HINSTANCE instance,
                     for (size_t i = 0; i < target_operations_per_frame; ++i, ++operations_per_frame_count)
                     {
                         emulator_process_opcode(&bitmap_buffer, NULL, &keyboard_input, &emulator);
-                    }     
+                    }
                 }
 
                 if (operations_per_frame_count == target_operations_per_frame)
@@ -96,8 +96,6 @@ WinMain (HINSTANCE instance,
                 win32_display_buffer_in_window(&internal_back_buffer, device_context, dimension.width, dimension.height);
 
                 keyboard_input = empty_keyboard_input;
-
-                Sleep(1);
             }
         }
         else
