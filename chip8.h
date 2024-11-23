@@ -11,6 +11,12 @@
 #define Assert(Expression)
 #endif
 
+uint8_t
+decode_key(uint8_t key);
+
+uint8_t
+encode_key(uint8_t key);
+
 inline uint32_t
 safe_truncate_uint64(uint64_t value)
 {

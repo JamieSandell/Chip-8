@@ -11,6 +11,86 @@
 #include "platform_services.h"
 #include "stack.h"
 
+uint8_t
+decode_key(uint8_t key)
+{
+    uint8_t value;
+
+    switch (key)
+    {
+        case 0x1:
+        {
+            value = 0;
+        } break;
+        case 0x2:
+        {
+            value = 1;
+        } break;
+        case 0x3:
+        {
+            value = 2;
+        } break;
+        case 0xC:
+        {
+            value = 3;
+        } break;
+        case 0x4:
+        {
+            value = 4;
+        } break;
+        case 0x5:
+        {
+            value = 5;
+        } break;
+        case 0x6:
+        {
+            value = 6;
+        } break;
+        case 0xD:
+        {
+            value = 7;
+        } break;
+        case 0x7:
+        {
+            value = 8;
+        } break;
+        case 0x8:
+        {
+            value = 9;
+        } break;
+        case 0x9:
+        {
+            value = 10;
+        } break;
+        case 0xE:
+        {
+            value = 11;
+        } break;
+        case 0xA:
+        {
+            value = 12;
+        } break;
+        case 0x0:
+        {
+            value = 13;
+        } break;
+        case 0xB:
+        {
+            value = 14;
+        } break;
+        case 0xF:
+        {
+            value = 15;
+        } break;
+        default:
+        {
+            // TODO: error handling
+        } break;
+    }
+
+    return value;
+}
+
 void
 emulator_load_rom(struct emulator *emulator)
 {
@@ -82,15 +162,6 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
     emulator->opcode = (emulator->first_byte >> 4) & 0x0F;
     emulator->pc = (uint16_t)(emulator->pc + 2);
     ++emulator->instruction_count;
-    
-    for (int key = 0; key < 16; ++key)
-    {
-        if (input->buttons[key].is_down)
-        {
-            snprintf(global_message, C_MAX_MESSAGE_SIZE, "%d is down.\n", key);
-            OutputDebugStringA(global_message);
-        }
-    }
     
     switch (emulator->opcode)
     {
@@ -345,13 +416,9 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                 case 0x9E:
                 {
                     OutputDebugString("if (key() == Vx)\n");
+                    uint8_t key = decode_key(emulator->general_purpose_registers[emulator->x]);
 
-                    if (input->buttons[14].is_down)
-                    {
-                        OutputDebugString("if (key() == Vx)\n");
-                    }
-                    
-                    if (input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
+                    if (input->buttons[key].is_down)
                     {
                        emulator->pc = (uint16_t)(emulator->pc + 2);
                     }
@@ -359,8 +426,9 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                 case 0xA1:
                 {
                     OutputDebugString("if (key() != Vx)\n");
-                    
-                    if (!input->buttons[emulator->general_purpose_registers[emulator->x]].is_down)
+                    uint8_t key = decode_key(emulator->general_purpose_registers[emulator->x]);
+
+                    if (!input->buttons[key].is_down)
                     {
                         emulator->pc = (uint16_t)(emulator->pc + 2);
                     }
@@ -398,7 +466,7 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                     
                     if (key_pressed)
                     {
-                        emulator->general_purpose_registers[emulator->x] = (uint8_t)key;
+                        emulator->general_purpose_registers[emulator->x] = encode_key((uint8_t)key);
                     }
                     else
                     {
@@ -469,4 +537,84 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
             OutputDebugStringA(global_message);
         } break;
     }
+}
+
+uint8_t
+encode_key(uint8_t key)
+{
+    uint8_t value;
+
+    switch (key)
+    {
+        case 0:
+        {
+            value = 0x1;
+        } break;
+        case 1:
+        {
+            value = 0x2;
+        } break;
+        case 2:
+        {
+            value = 0x3;            
+        } break;
+        case 3:
+        {
+            value = 0xC;
+        } break;
+        case 4:
+        {
+            value = 0x4;
+        } break;
+        case 5:
+        {
+            value = 0x5;
+        } break;
+        case 6:
+        {
+            value = 0x6;
+        } break;
+        case 7:
+        {
+            value = 0xD;
+        } break;
+        case 8:
+        {
+            value = 0x7;
+        } break;
+        case 9:
+        {
+            value = 0x8;
+        } break;
+        case 10:
+        {
+            value = 0x9;
+        } break;
+        case 11:
+        {
+            value = 0xE;
+        } break;
+        case 12:
+        {
+            value = 0xA;
+        } break;
+        case 13:
+        {
+            value = 0x0;
+        } break;
+        case 14:
+        {
+            value =0xB;
+        } break;
+        case 15:
+        {
+            value = 0xF;
+        } break;
+        default:
+        {
+            // TODO: error handling
+        } break;
+    }
+
+    return value;
 }
