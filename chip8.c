@@ -117,6 +117,7 @@ emulator_load_rom(struct emulator *emulator)
     emulator->pc = c_ram_offset;
     srand((unsigned int)time(0));
     emulator->hz = 1320;
+    emulator->timer_start_time_ms = platform_get_milliseconds_now();
 }
 
 void
@@ -125,22 +126,29 @@ emulator_process_opcode(struct emulator_offscreen_buffer *buffer,
                            struct emulator_keyboard_input *input,
                            struct emulator *emulator)
 {
+    int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - emulator->timer_start_time_ms;
+    float target_frame_rate_ms = (1 / (float)c_target_fps) * 1000;
 
-    if (emulator->delay_timer > 0)
-    {
-        --emulator->delay_timer;
-    }
-    
-    if (emulator->sound_timer > 0)
-    {
-        --emulator->sound_timer;
-    }
+    if (elapsed_time_ms >= target_frame_rate_ms)
+    {                    
+        if (emulator->delay_timer > 0)
+        {
+            --emulator->delay_timer;
+        }
 
-    if (emulator->sound_timer < 0)
-    {
-        OutputDebugStringA("Beep!");
-        // TODO: Play sound
-    }
+        if (emulator->sound_timer > 0)
+        {
+            --emulator->sound_timer;
+        }
+
+        if (emulator->sound_timer < 0) // TODO: sound_timer should never be negative
+        {
+            OutputDebugStringA("Beep!");
+            // TODO: Play sound
+        }
+
+        emulator->timer_start_time_ms = platform_get_milliseconds_now();
+    }    
 
     emulator->first_byte = emulator->memory[emulator->pc];
     emulator->second_byte = emulator->memory[emulator->pc + 1];

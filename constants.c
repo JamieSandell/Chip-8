@@ -33,3 +33,4 @@ const uint8_t c_font_set[C_FONT_SET_SIZE] =
 const uint8_t c_font_offset = 0x50;
 const uint16_t c_operations_per_cycle = 2;
 const uint16_t c_ram_offset = 0x200;
+const int c_target_fps = 60;

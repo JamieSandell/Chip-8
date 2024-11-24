@@ -56,8 +56,8 @@ WinMain (HINSTANCE instance,
 
             int frames_count = 0;
             int_least64_t instrtuctions_start_time_ms = platform_get_milliseconds_now();
-            int target_fps = 60;
-            float target_frame_rate_ms = (1 / (float)target_fps) * 1000;
+            
+            float target_frame_rate_ms = (1 / (float)c_target_fps) * 1000;
             uint8_t operations_per_frame_count = 0;
             
             while (internal_running)
@@ -72,7 +72,7 @@ WinMain (HINSTANCE instance,
                 bitmap_buffer.pitch = internal_back_buffer.pitch;
                 
                 int_least64_t elapsed_time_ms = platform_get_milliseconds_now() - instrtuctions_start_time_ms;
-                uint16_t target_operations_per_frame = (uint16_t)(emulator.hz / c_operations_per_cycle / target_fps);
+                uint16_t target_operations_per_frame = (uint16_t)(emulator.hz / c_operations_per_cycle / c_target_fps);
 
                 if (elapsed_time_ms < target_frame_rate_ms && operations_per_frame_count < target_operations_per_frame)
                 {                    

@@ -15,5 +15,6 @@ extern const uint8_t c_font_set[C_FONT_SET_SIZE];
 extern const uint8_t c_font_offset;
 extern const uint16_t c_operations_per_cycle;
 extern const uint16_t c_ram_offset;
+extern const int c_target_fps;
 
 #endif
